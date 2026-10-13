@@ -1,0 +1,109 @@
+@use 'sass:string';
+@use '@angular/material' as mat;
+
+// Carattere di sistema: nessuna richiesta a server esterni (es. Google Fonts).
+$font: string.unquote('system-ui, -apple-system, "Segoe UI", Roboto, sans-serif');
+
+html {
+  color-scheme: light dark;
+  @include mat.theme(
+    (
+      color: mat.$red-palette,
+      typography: (
+        plain-family: $font,
+        brand-family: $font,
+      ),
+      density: 0,
+    )
+  );
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  color: var(--mat-sys-on-surface);
+  font: var(--mat-sys-body-large);
+  background: var(--mat-sys-surface);
+}
+
+h1 {
+  margin: 0 0 0.25rem;
+  font: var(--mat-sys-headline-small);
+}
+
+h2 {
+  margin: 0;
+  font: var(--mat-sys-title-large);
+}
+
+a {
+  color: var(--mat-sys-primary);
+}
+
+p {
+  margin: 0.25rem 0;
+}
+
+.muted {
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.error {
+  color: var(--mat-sys-error);
+  font: var(--mat-sys-body-medium);
+}
+
+.center {
+  display: grid;
+  place-items: center;
+  min-height: 100dvh;
+  padding: 1rem;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.page {
+  display: grid;
+  gap: 1rem;
+  max-width: 60rem;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+// Una scheda non può allargare la pagina oltre lo schermo per far stare il suo contenuto.
+.page > * {
+  min-width: 0;
+}
+
+// Modulo a colonna dentro una scheda.
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.5rem;
+}
+
+// Telefono: sotto i 600 px l'app passa alla disposizione "da app" (navigazione in basso, icone).
+$phone: 599.98px;
+
+@media (max-width: $phone) {
+  // !important: deve vincere anche sugli stili dei componenti che impostano display.
+  .desktop-only {
+    display: none !important;
+  }
+
+  // Spazio per la barra di navigazione fissa in basso.
+  body {
+    padding-bottom: calc(5rem + env(safe-area-inset-bottom));
+  }
+
+  .page {
+    padding: 0.75rem;
+  }
+}

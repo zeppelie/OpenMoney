@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Fondo pieno e disegno dentro il cerchio centrale: Android ritaglia da solo l'icona "maskable" a cerchio. -->
+  <rect class="bg" width="512" height="512" fill="#d32f2f"/>
+  <g fill="#ffffff">
+    <ellipse cx="250" cy="268" rx="120" ry="88"/>
+    <rect x="180" y="328" width="36" height="60" rx="12"/>
+    <rect x="286" y="328" width="36" height="60" rx="12"/>
+    <path d="M292 200l58-42-4 70z"/>
+    <rect x="350" y="244" width="48" height="56" rx="18"/>
+  </g>
+  <path d="M132 264c-28-2-34-34-12-40" fill="none" stroke="#ffffff" stroke-width="12" stroke-linecap="round"/>
+  <rect x="204" y="198" width="66" height="12" rx="6" fill="#d32f2f"/>
+  <circle cx="318" cy="250" r="9" fill="#d32f2f"/>
+  <circle cx="376" cy="264" r="5" fill="#d32f2f"/>
+  <circle cx="376" cy="282" r="5" fill="#d32f2f"/>
+</svg>

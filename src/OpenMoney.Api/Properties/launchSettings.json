@@ -1,0 +1,21 @@
+﻿{
+  "profiles": {
+    "Docker Compose (tutto)": {
+      "commandName": "Executable",
+      "executablePath": "cmd.exe",
+      "commandLineArgs": "/k docker compose up --build -d --wait && start http://localhost:8090 && docker compose logs -f app",
+      "workingDirectory": "$(ProjectDir)..\\.."
+    },
+    "Docker Compose (stop)": {
+      "commandName": "Executable",
+      "executablePath": "cmd.exe",
+      "commandLineArgs": "/k docker compose down",
+      "workingDirectory": "$(ProjectDir)..\\.."
+    },
+    "http": {
+      "commandName": "Project",
+      "applicationUrl": "http://localhost:5090",
+      "environmentVariables": { "ASPNETCORE_ENVIRONMENT": "Development" }
+    }
+  }
+}

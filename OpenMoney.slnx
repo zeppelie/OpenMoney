@@ -1,0 +1,7 @@
+﻿<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/OpenMoney.Api/OpenMoney.Api.csproj" />
+    <Project Path="src/OpenMoney.Core/OpenMoney.Core.csproj" />
+    <Project Path="src/OpenMoney.Infrastructure/OpenMoney.Infrastructure.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,44 @@
+﻿services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: openmoney
+      POSTGRES_USER: openmoney
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?imposta POSTGRES_PASSWORD nel file .env}
+    # 5434 sul PC: 5432 e 5433 sono già di altre app.
+    ports:
+      - "127.0.0.1:5434:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U openmoney -d openmoney"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ConnectionStrings__Default: Host=db;Database=openmoney;Username=openmoney;Password=${POSTGRES_PASSWORD}
+      DataProtection__KeysPath: /keys
+      ApiDocs: ${API_DOCS:-false}
+    volumes:
+      - keys:/keys
+    # L'immagine aspnet non ha curl: basta verificare che la porta accetti connessioni.
+    healthcheck:
+      test: ["CMD", "bash", "-c", "echo > /dev/tcp/localhost/8080"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    # 8090 di serie: la 8080 è già di OpenMeal.
+    ports:
+      - "${APP_PORT:-8090}:8080"
+
+volumes:
+  db-data:
+  keys:
