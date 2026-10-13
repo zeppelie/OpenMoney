@@ -6,14 +6,15 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { Account, AccountsService } from '../accounts/accounts.service';
-import { CategoriesService, Category, categoryLabels } from '../categories/categories.service';
+import { CategoriesService, Category } from '../categories/categories.service';
 import { Icon } from '../layout/icon';
 import { formDialog } from '../shared/dialogs';
 import { EurPipe } from '../shared/money';
 import { MonthNav } from '../shared/month-nav';
 import { Period, currentPeriod, isoDate, monthLabel } from '../shared/period';
+import { DayList } from './day-list';
 import { MovementDialog, MovementDialogData } from './movement-dialog';
-import { DayLedger, MonthLedger, MonthTotals, Movement, MovementsService, movementTitle } from './movements.service';
+import { MonthLedger, MonthTotals, Movement, MovementsService } from './movements.service';
 
 interface CalendarCell {
   /** Giorno del mese; null per le caselle vuote prima del giorno 1. */
@@ -23,16 +24,19 @@ interface CalendarCell {
   expense: number;
 }
 
-const dayName = new Intl.DateTimeFormat('it-IT', { weekday: 'long', day: 'numeric' });
 const weekdays = ['lun', 'mar', 'mer', 'gio', 'ven', 'sab', 'dom'];
 
-/** I movimenti di un mese in tre viste: elenco per giorni, calendario e riepilogo dell'anno. */
+/** I movimenti di un mese in quattro viste: elenco per giorni, calendario, settimane e riepilogo dell'anno. */
 @Component({
   selector: 'app-movements',
-  imports: [EurPipe, Icon, MatButtonModule, MatCardModule, MatTabsModule, MonthNav, RouterLink],
+  imports: [DayList, EurPipe, Icon, MatButtonModule, MatCardModule, MatTabsModule, MonthNav, RouterLink],
   template: `
     <main class="page">
-      <app-month-nav [period]="period()" (periodChange)="show($event)" />
+      <div class="header">
+        <app-month-nav [period]="period()" (periodChange)="show($event)" />
+        <span class="spacer"></span>
+        <a matIconButton routerLink="/cerca" aria-label="Cerca tra i movimenti"><app-icon name="search" /></a>
+      </div>
 
       <mat-card appearance="outlined">
         <div class="totals">
@@ -44,27 +48,9 @@ const weekdays = ['lun', 'mar', 'mer', 'gio', 'ven', 'sab', 'dom'];
 
       <mat-tab-group [selectedIndex]="tab()" (selectedIndexChange)="tab.set($event)" dynamicHeight>
         <mat-tab label="Giorni">
-          @for (day of ledger().days; track day.date) {
-            <mat-card appearance="outlined" class="day">
-              <div class="row head">
-                <span>{{ dayLabel(day) }}</span>
-                <span class="amounts">
-                  <span class="income">{{ day.income | eur }}</span>
-                  <span class="expense">{{ day.expense | eur }}</span>
-                </span>
-              </div>
-              @for (movement of day.movements; track movement.id) {
-                <button type="button" class="row" (click)="open(movement)">
-                  <span class="what">
-                    <span>{{ what(movement) }}</span>
-                    <span class="muted">{{ details(movement) }}</span>
-                  </span>
-                  <span [class]="movement.kind.toLowerCase()">{{ movement.amount | eur }}</span>
-                </button>
-              }
-            </mat-card>
-          } @empty {
-            <p class="muted empty">
+          <app-day-list class="tab" [days]="ledger().days" [accounts]="accounts()" [categories]="categories()" (opened)="open($event)" />
+          @if (!ledger().days.length) {
+            <p class="muted">
               Nessun movimento in questo mese.
               @if (loaded() && !accounts().length) {
                 Per registrarne uno serve almeno un conto: <a routerLink="/conti">creane uno</a>.
@@ -74,7 +60,7 @@ const weekdays = ['lun', 'mar', 'mer', 'gio', 'ven', 'sab', 'dom'];
         </mat-tab>
 
         <mat-tab label="Calendario">
-          <div class="calendar">
+          <div class="calendar tab">
             @for (weekday of weekdays; track weekday) {
               <span class="weekday muted">{{ weekday }}</span>
             }
@@ -96,11 +82,26 @@ const weekdays = ['lun', 'mar', 'mer', 'gio', 'ven', 'sab', 'dom'];
           </div>
         </mat-tab>
 
+        <mat-tab label="Settimane">
+          <mat-card appearance="outlined" class="tab">
+            @for (week of weeks(); track week.label) {
+              <div class="row">
+                <span>{{ week.label }}</span>
+                <span class="amounts">
+                  <span class="income">{{ week.income | eur }}</span>
+                  <span class="expense">{{ week.expense | eur }}</span>
+                  <span>{{ week.income - week.expense | eur }}</span>
+                </span>
+              </div>
+            }
+          </mat-card>
+        </mat-tab>
+
         <mat-tab [label]="'Anno ' + period().year">
-          <mat-card appearance="outlined" class="day">
+          <mat-card appearance="outlined" class="tab">
             @for (totals of yearTotals(); track totals.month) {
               <button type="button" class="row" (click)="goTo(totals.month)">
-                <span class="what month-name">{{ monthLabel(totals.month) }}</span>
+                <span class="month-name">{{ monthLabel(totals.month) }}</span>
                 <span class="amounts">
                   <span class="income">{{ totals.income | eur }}</span>
                   <span class="expense">{{ totals.expense | eur }}</span>
@@ -121,23 +122,17 @@ const weekdays = ['lun', 'mar', 'mer', 'gio', 'ven', 'sab', 'dom'];
     </main>
   `,
   styles: `
-    .day {
+    .header {
+      display: flex;
+      align-items: center;
+    }
+
+    .tab {
       margin-top: 0.75rem;
     }
 
-    .head span:first-child {
-      text-transform: capitalize;
-    }
-
-    .what {
-      display: flex;
-      flex: 1;
-      flex-direction: column;
-      min-width: 0;
-    }
-
-    .what .muted {
-      font: var(--mat-sys-body-small);
+    .tab .row:first-child {
+      border-top: 0;
     }
 
     .month-name {
@@ -151,15 +146,10 @@ const weekdays = ['lun', 'mar', 'mer', 'gio', 'ven', 'sab', 'dom'];
       gap: 0 1rem;
     }
 
-    .empty {
-      padding: 1rem 0;
-    }
-
     .calendar {
       display: grid;
       grid-template-columns: repeat(7, minmax(0, 1fr));
       gap: 0.25rem;
-      padding-top: 0.75rem;
     }
 
     .weekday {
@@ -194,7 +184,6 @@ export class Movements {
   private readonly categoriesService = inject(CategoriesService);
   private readonly dialog = inject(MatDialog);
   protected readonly weekdays = weekdays;
-
   protected readonly monthLabel = monthLabel;
 
   private readonly today = new Date();
@@ -205,10 +194,7 @@ export class Movements {
   protected readonly ledger = signal<MonthLedger>({ income: 0, expense: 0, days: [] });
   protected readonly yearTotals = signal<MonthTotals[]>([]);
   protected readonly accounts = signal<Account[]>([]);
-  private readonly categories = signal<Category[]>([]);
-
-  private readonly accountNames = computed(() => new Map(this.accounts().map((account) => [account.id, account.name])));
-  private readonly categoryNames = computed(() => categoryLabels(this.categories()));
+  protected readonly categories = signal<Category[]>([]);
 
   /** Le caselle del mese, con le vuote necessarie perché il giorno 1 cada sotto il suo giorno della settimana. */
   protected readonly calendar = computed<CalendarCell[]>(() => {
@@ -225,23 +211,22 @@ export class Movements {
     });
   });
 
+  /** Le settimane del mese (da lunedì a domenica, tagliate ai suoi giorni) con i loro totali: sono le righe del calendario. */
+  protected readonly weeks = computed(() => {
+    const cells = this.calendar();
+    const month = monthLabel(this.period().month);
+    return Array.from({ length: Math.ceil(cells.length / 7) }, (_, week) => {
+      const days = cells.slice(week * 7, week * 7 + 7).filter((cell) => cell.day);
+      return {
+        label: `${days[0].day} – ${days[days.length - 1].day} ${month}`,
+        income: days.reduce((sum, cell) => sum + cell.income, 0),
+        expense: days.reduce((sum, cell) => sum + cell.expense, 0),
+      };
+    });
+  });
+
   constructor() {
     void this.load();
-  }
-
-  protected dayLabel(day: DayLedger): string {
-    return dayName.format(new Date(`${day.date}T00:00`));
-  }
-
-  /** Prima riga di un movimento: la categoria, o i due conti di un trasferimento. */
-  protected what(movement: Movement): string {
-    return movementTitle(movement, this.accountNames(), this.categoryNames());
-  }
-
-  /** Seconda riga: nota, conto e chi l'ha inserito. */
-  protected details(movement: Movement): string {
-    const account = movement.kind === 'Transfer' ? 'Trasferimento' : this.accountNames().get(movement.accountId);
-    return [movement.note, account, movement.author].filter(Boolean).join(' · ');
   }
 
   protected show(period: Period): Promise<void> {

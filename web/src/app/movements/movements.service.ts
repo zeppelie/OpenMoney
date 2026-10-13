@@ -45,6 +45,29 @@ export interface MonthTotals {
   expense: number;
 }
 
+/** Filtri della ricerca: valgono tutti insieme, quelli nulli o vuoti non filtrano. */
+export interface SearchCriteria {
+  /** Testo cercato nella nota. */
+  text: string | null;
+  /** Estremi dell'intervallo di date (ISO aaaa-mm-gg), compresi. */
+  from: string | null;
+  to: string | null;
+  accountId: string | null;
+  /** Una categoria di primo livello comprende le sue sottocategorie. */
+  categoryId: string | null;
+  kind: MovementKind | null;
+}
+
+export interface SearchResult {
+  ledger: MonthLedger;
+  /** Vero se i movimenti trovati sono più di quelli mostrati. */
+  truncated: boolean;
+}
+
+function searchParams(criteria: SearchCriteria): Record<string, string> {
+  return Object.fromEntries(Object.entries(criteria).filter((entry): entry is [string, string] => !!entry[1]));
+}
+
 /** Come si intitola un movimento in un elenco: la categoria, o i due conti di un trasferimento. */
 export function movementTitle(
   movement: MovementInput,
@@ -66,6 +89,15 @@ export class MovementsService {
 
   year(year: number): Promise<MonthTotals[]> {
     return firstValueFrom(this.http.get<MonthTotals[]>(`/api/movements/years/${year}`));
+  }
+
+  search(criteria: SearchCriteria): Promise<SearchResult> {
+    return firstValueFrom(this.http.get<SearchResult>('/api/movements/search', { params: searchParams(criteria) }));
+  }
+
+  /** Indirizzo da cui scaricare in CSV tutti i movimenti che rispettano i filtri. */
+  exportUrl(criteria: SearchCriteria): string {
+    return `/api/movements/export?${new URLSearchParams(searchParams(criteria))}`;
   }
 
   /** Con `id` modifica il movimento, senza ne crea uno. */

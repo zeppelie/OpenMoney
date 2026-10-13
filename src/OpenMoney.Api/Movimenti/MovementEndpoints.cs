@@ -26,15 +26,8 @@ public static class MovementEndpoints
             if (Periods.Month(year, month) is not { } period)
                 return Results.BadRequest();
 
-            var ledger = MonthLedger.From(
-                await db.Movements.Where(m => m.Date >= period.From && m.Date < period.To).ToListAsync(ct));
-            var authors = await db.Users.ToDictionaryAsync(u => u.Id, u => u.DisplayName ?? u.Email, ct);
-
-            return Results.Ok(new MonthResponse(ledger.Income, ledger.Expense,
-            [
-                .. ledger.Days.Select(day => new DayResponse(day.Date, day.Income, day.Expense,
-                    [.. day.Movements.Select(m => ToResponse(m, authors))])),
-            ]));
+            var found = await db.Movements.Where(m => m.Date >= period.From && m.Date < period.To).ToListAsync(ct);
+            return Results.Ok(await LedgerResponseAsync(found, db, ct));
         });
 
         movements.MapGet("years/{year:int}", async (int year, AppDbContext db, CancellationToken ct) =>
@@ -85,6 +78,19 @@ public static class MovementEndpoints
             await db.SaveChangesAsync(ct);
             return Results.NoContent();
         });
+    }
+
+    /// <summary>I movimenti raggruppati per giorno con i totali, e il nome di chi li ha inseriti.</summary>
+    internal static async Task<MonthResponse> LedgerResponseAsync(IEnumerable<Movement> movements, AppDbContext db, CancellationToken ct)
+    {
+        var ledger = MonthLedger.From(movements);
+        var authors = await db.Users.ToDictionaryAsync(u => u.Id, u => u.DisplayName ?? u.Email, ct);
+
+        return new(ledger.Income, ledger.Expense,
+        [
+            .. ledger.Days.Select(day => new DayResponse(day.Date, day.Income, day.Expense,
+                [.. day.Movements.Select(m => ToResponse(m, authors))])),
+        ]);
     }
 
     private static async Task<IResult?> ProblemAsync(MovementValues values, AppDbContext db, CancellationToken ct) =>

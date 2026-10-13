@@ -91,6 +91,7 @@ app.MapUsers();
 app.MapAccounts();
 app.MapCategories();
 app.MapMovements();
+app.MapMovementSearch();
 app.MapStats();
 app.MapBudgets();
 app.MapRecurrences();

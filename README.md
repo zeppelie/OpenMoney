@@ -10,11 +10,12 @@ Alternativa self-hosted a Money Manager: entrate, uscite, conti e budget della f
 
 - Conti raggruppati (contanti, banca, carte, risparmi, investimenti, prestiti): il saldo si calcola da saldo iniziale e movimenti, e la pagina mostra attività, passività e totale.
 - Categorie di entrata e di uscita con un livello di sottocategorie; un'installazione nuova parte con le più comuni.
-- Movimenti: entrate, uscite e trasferimenti tra conti, visti per giorni, sul calendario del mese e nel riepilogo dell'anno. I trasferimenti non contano nei totali di entrate e uscite.
+- Movimenti: entrate, uscite e trasferimenti tra conti, visti per giorni, sul calendario del mese, per settimane e nel riepilogo dell'anno. I trasferimenti non contano nei totali di entrate e uscite.
 - Statistiche: quote di entrate o uscite del mese per categoria (le sottocategorie confluiscono nella loro categoria) e andamento dei dodici mesi dell'anno.
 - Budget: un importo mensile per categoria di uscita, confrontato con quanto si è speso nel mese.
 - Ricorrenze e rate: nel modulo di un movimento "Ripeti" lo fa tornare ogni settimana, mese o anno; con un numero di volte è un piano di rate (l'importo è quello di ogni rata). I movimenti maturati li crea l'app, all'avvio e poi ogni ora; l'elenco è in **Ricorrenze** (dal Profilo, sul telefono).
 - Carte di credito a saldo: indicando su una carta il conto e il giorno di addebito, ogni mese l'app registra da sola il trasferimento che salda le spese del mese solare precedente. Collegando una carta si parte dal primo estratto il cui addebito non è ancora passato.
+- Ricerca (la lente nella pagina dei movimenti): per testo della nota, periodo, conto, categoria e tipo. Il risultato si esporta in CSV, nel formato che Excel in italiano apre direttamente.
 - Conti, categorie e movimenti sono condivisi da tutta la famiglia; ogni movimento ricorda chi l'ha inserito.
 
 - Al primo avvio chi apre l'app crea l'account dell'amministratore; poi gli altri utenti li aggiunge lui da **Profilo → Utenti**. Non c'è registrazione libera.
