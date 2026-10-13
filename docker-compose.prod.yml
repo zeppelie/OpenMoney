@@ -1,0 +1,46 @@
+# Pubblicazione dietro un reverse proxy HTTPS (es. Caddy). Vedi README, sezione "Pubblicazione".
+# Differenze rispetto a docker-compose.yml: il database non è raggiungibile da fuori, l'app ascolta solo
+# sull'interfaccia locale del server e niente documentazione delle API.
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: openmoney
+      POSTGRES_USER: openmoney
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?imposta POSTGRES_PASSWORD nel file .env}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U openmoney -d openmoney"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ConnectionStrings__Default: Host=db;Database=openmoney;Username=openmoney;Password=${POSTGRES_PASSWORD}
+      DataProtection__KeysPath: /keys
+      # L'app si fida delle intestazioni X-Forwarded-* del proxy: sa di essere servita in HTTPS e marca
+      # "Secure" il cookie di login. È sicuro solo perché l'app non è raggiungibile se non tramite il proxy.
+      ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
+    volumes:
+      - keys:/keys
+    # L'immagine aspnet non ha curl: basta verificare che la porta accetti connessioni.
+    healthcheck:
+      test: ["CMD", "bash", "-c", "echo > /dev/tcp/localhost/8080"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    ports:
+      # Solo 127.0.0.1: da fuori si passa obbligatoriamente dal proxy. 8095 di serie: la 8085 è di OpenMeal.
+      - "127.0.0.1:${APP_PORT:-8095}:8080"
+
+volumes:
+  db-data:
+  keys:
