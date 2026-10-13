@@ -4,4 +4,7 @@
     <Project Path="src/OpenMoney.Core/OpenMoney.Core.csproj" />
     <Project Path="src/OpenMoney.Infrastructure/OpenMoney.Infrastructure.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/OpenMoney.Tests/OpenMoney.Tests.csproj" />
+  </Folder>
 </Solution>

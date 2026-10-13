@@ -9,6 +9,8 @@ export const routes: Routes = [
     loadComponent: () => import('./layout/shell').then((m) => m.Shell),
     children: [
       { path: '', loadComponent: () => import('./movements/movements').then((m) => m.Movements) },
+      { path: 'conti', loadComponent: () => import('./accounts/accounts').then((m) => m.Accounts) },
+      { path: 'categorie', loadComponent: () => import('./categories/categories').then((m) => m.Categories) },
       { path: 'profilo', loadComponent: () => import('./profile/profile').then((m) => m.Profile) },
     ],
   },

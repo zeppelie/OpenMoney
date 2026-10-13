@@ -13,8 +13,13 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { path: '/', icon: 'list', label: 'Movimenti' },
+  { path: '/conti', icon: 'wallet', label: 'Conti' },
+  { path: '/categorie', icon: 'label', label: 'Categorie' },
   { path: '/profilo', icon: 'person', label: 'Profilo' },
 ];
+
+// Sul desktop il profilo sta a destra, con il nome dell'utente.
+const sections = navItems.filter((item) => item.path !== '/profilo');
 
 /**
  * Cornice delle pagine riservate. Su schermo largo: barra in alto con tutte le voci.
@@ -31,7 +36,9 @@ const navItems: NavItem[] = [
         OpenMoney
       </a>
       <span class="desktop-only links">
-        <a matButton routerLink="/">Movimenti</a>
+        @for (item of sections; track item.path) {
+          <a matButton [routerLink]="item.path">{{ item.label }}</a>
+        }
       </span>
       <span class="spacer"></span>
       <span class="desktop-only links">
@@ -135,6 +142,7 @@ export class Shell {
   protected readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   protected readonly navItems = navItems;
+  protected readonly sections = sections;
 
   protected async logout(): Promise<void> {
     await this.auth.logout();

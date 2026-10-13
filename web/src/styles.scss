@@ -57,6 +57,82 @@ p {
   font: var(--mat-sys-body-medium);
 }
 
+// Entrate in blu e uscite in rosso, come nell'app a cui ci si ispira; leggibili in tema chiaro e scuro.
+.income {
+  color: light-dark(#1565c0, #90caf9);
+}
+
+.expense {
+  color: light-dark(#c62828, #ef9a9a);
+}
+
+// Riga di un elenco dentro una scheda; se è un pulsante apre la modifica.
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
+  min-height: 3rem;
+  padding: 0.5rem 1rem;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  background: none;
+  border: 0;
+  border-top: 1px solid var(--mat-sys-outline-variant);
+}
+
+button.row {
+  cursor: pointer;
+}
+
+button.row:hover {
+  background: var(--mat-sys-surface-container);
+}
+
+.row.head {
+  font: var(--mat-sys-title-small);
+  border-top: 0;
+}
+
+// Tre cifre di riepilogo affiancate in cima a una pagina.
+.totals {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-around;
+  gap: 0.5rem 1.5rem;
+  padding: 1rem;
+
+  span {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font: var(--mat-sys-label-large);
+  }
+
+  strong {
+    font: var(--mat-sys-title-medium);
+  }
+}
+
+// Campi di un modulo in una finestra di dialogo. Il primo selettore serve a vincere sugli stili di Material.
+.mat-mdc-dialog-container .fields {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  // Senza, l'etichetta flottante del primo campo viene tagliata dal bordo dell'area scorrevole.
+  padding-top: 0.5rem;
+}
+
+// Azione principale della pagina: in basso a destra, sul telefono sopra la barra di navigazione.
+.fab {
+  position: fixed !important;
+  right: 1.5rem;
+  bottom: 1.5rem;
+  z-index: 6;
+}
+
 .center {
   display: grid;
   place-items: center;
@@ -73,7 +149,8 @@ p {
   gap: 1rem;
   max-width: 60rem;
   margin: 0 auto;
-  padding: 1rem;
+  // In fondo resta spazio perché il pulsante flottante non copra l'ultima riga.
+  padding: 1rem 1rem 6rem;
 }
 
 // Una scheda non può allargare la pagina oltre lo schermo per far stare il suo contenuto.
@@ -105,5 +182,10 @@ $phone: 599.98px;
 
   .page {
     padding: 0.75rem;
+  }
+
+  .fab {
+    right: 1rem;
+    bottom: calc(5.5rem + env(safe-area-inset-bottom));
   }
 }

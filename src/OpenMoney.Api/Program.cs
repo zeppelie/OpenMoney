@@ -1,7 +1,12 @@
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json.Serialization;
 using OpenMoney.Api;
+using OpenMoney.Api.Categorie;
+using OpenMoney.Api.Conti;
+using OpenMoney.Api.Movimenti;
+using OpenMoney.Core.Categorie;
 using OpenMoney.Infrastructure;
 using Scalar.AspNetCore;
 
@@ -38,12 +43,25 @@ var keysPath = builder.Configuration["DataProtection:KeysPath"];
 if (keysPath is not null)
     builder.Services.AddDataProtection().PersistKeysToFileSystem(new DirectoryInfo(keysPath));
 
+// Tipi e gruppi viaggiano come nomi ("Expense"), non come numeri che cambierebbero significato riordinando un enum.
+builder.Services.ConfigureHttpJsonOptions(o => o.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
 
 await using (var scope = app.Services.CreateAsyncScope())
-    await scope.ServiceProvider.GetRequiredService<AppDbContext>().Database.MigrateAsync();
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await db.Database.MigrateAsync();
+
+    // Un'installazione nuova parte con le categorie più comuni, poi modificabili.
+    if (!await db.Categories.AnyAsync())
+    {
+        db.Categories.AddRange(DefaultCategories.Create());
+        await db.SaveChangesAsync();
+    }
+}
 
 // index.html punta ai bundle con hash nel nome: se resta in cache, dopo un rilascio il browser carica la versione vecchia.
 var staticFiles = new StaticFileOptions
@@ -63,6 +81,9 @@ app.UseAuthorization();
 app.MapAuth();
 app.MapProfile();
 app.MapUsers();
+app.MapAccounts();
+app.MapCategories();
+app.MapMovements();
 
 // Documentazione interattiva (Scalar su /scalar): sempre in sviluppo, altrove solo su richiesta esplicita.
 if (app.Environment.IsDevelopment() || app.Configuration.GetValue<bool>("ApiDocs"))

@@ -18,6 +18,20 @@ const messages: Record<string, string> = {
   InvalidUserName: "L'indirizzo email non è valido.",
   DisplayNameTooLong: 'Il nome è troppo lungo (massimo 100 caratteri).',
   CannotDeleteSelf: 'Non puoi eliminare il tuo account.',
+  InvalidName: 'Il nome è obbligatorio (massimo 60 caratteri).',
+  InvalidAmount: "L'importo non è valido.",
+  InvalidDate: 'La data non è valida.',
+  NoteTooLong: 'La nota è troppo lunga (massimo 200 caratteri).',
+  MissingCategory: 'Scegli una categoria.',
+  CategoryKindMismatch: 'La categoria non è del tipo giusto.',
+  MissingToAccount: 'Scegli il conto di destinazione.',
+  SameAccount: 'I due conti devono essere diversi.',
+  UnknownAccount: 'Il conto non esiste più.',
+  AccountInUse: 'Il conto ha dei movimenti: non si può eliminare.',
+  CategoryInUse: 'La categoria ha dei movimenti: non si può eliminare.',
+  CategoryHasChildren: 'Elimina o sposta prima le sottocategorie.',
+  InvalidParentCategory: 'La categoria superiore non è valida.',
+  CategoryKindLocked: 'Il tipo di una categoria esistente non si può cambiare.',
 };
 
 /**

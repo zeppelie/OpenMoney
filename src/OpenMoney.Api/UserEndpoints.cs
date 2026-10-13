@@ -45,7 +45,7 @@ public static class UserEndpoints
         {
             // Senza questo controllo l'unico amministratore potrebbe chiudersi fuori da solo.
             if (id == users.GetUserId(principal))
-                return Problem("CannotDeleteSelf", "You cannot delete your own account.");
+                return Problems.Of("CannotDeleteSelf");
             if (await users.FindByIdAsync(id) is not { } user)
                 return Results.NotFound();
 
@@ -77,11 +77,8 @@ public static class UserEndpoints
 
     internal static IResult? ValidateDisplayName(string? displayName) =>
         displayName?.Length > AppUser.DisplayNameMaxLength
-            ? Problem("DisplayNameTooLong", $"Display name must be at most {AppUser.DisplayNameMaxLength} characters.")
+            ? Problems.Of("DisplayNameTooLong")
             : null;
-
-    private static IResult Problem(string code, string description) =>
-        Results.ValidationProblem(new Dictionary<string, string[]> { [code] = [description] });
 
     // Le chiavi sono codici (qui quelli di Identity): il frontend li traduce.
     private static Dictionary<string, string[]> ToErrors(IdentityResult result) =>

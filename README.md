@@ -6,7 +6,12 @@ Alternativa self-hosted a Money Manager: entrate, uscite, conti e budget della f
 - Frontend: Angular (`web/`), servito dallo stesso container dell'API; è una PWA installabile sul telefono
 - Distribuzione: Docker (un container `app` + un container `db`)
 
-## Stato: login, profilo e utenti della famiglia
+## Stato: login e utenti della famiglia, conti, categorie, movimenti
+
+- Conti raggruppati (contanti, banca, carte, risparmi, investimenti, prestiti): il saldo si calcola da saldo iniziale e movimenti, e la pagina mostra attività, passività e totale.
+- Categorie di entrata e di uscita con un livello di sottocategorie; un'installazione nuova parte con le più comuni.
+- Movimenti: entrate, uscite e trasferimenti tra conti, visti per giorni, sul calendario del mese e nel riepilogo dell'anno. I trasferimenti non contano nei totali di entrate e uscite.
+- Conti, categorie e movimenti sono condivisi da tutta la famiglia; ogni movimento ricorda chi l'ha inserito.
 
 - Al primo avvio chi apre l'app crea l'account dell'amministratore; poi gli altri utenti li aggiunge lui da **Profilo → Utenti**. Non c'è registrazione libera.
 - Sessione con cookie HttpOnly (nessun token da gestire nel frontend). Con "Resta collegato" dura tre mesi dall'ultimo utilizzo.
