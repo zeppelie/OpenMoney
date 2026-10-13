@@ -5,14 +5,14 @@ import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../auth/auth.service';
 import { errorMessages } from '../shared/errors';
 import { Users } from './users';
 
 @Component({
   selector: 'app-profile',
-  imports: [ReactiveFormsModule, MatButtonModule, MatCardModule, MatFormFieldModule, MatInputModule, Users],
+  imports: [ReactiveFormsModule, MatButtonModule, MatCardModule, MatFormFieldModule, MatInputModule, RouterLink, Users],
   template: `
     <main class="page">
       <h1>Profilo</h1>
@@ -29,6 +29,7 @@ import { Users } from './users';
           }
           <div class="actions">
             <button matButton="filled" type="submit">Salva</button>
+            <a matButton routerLink="/categorie">Categorie</a>
             <button matButton type="button" (click)="logout()">Esci</button>
           </div>
         </form>
@@ -62,6 +63,7 @@ import { Users } from './users';
   styles: `
     .actions {
       display: flex;
+      flex-wrap: wrap;
       gap: 0.5rem;
     }
   `,

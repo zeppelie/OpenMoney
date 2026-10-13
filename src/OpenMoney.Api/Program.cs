@@ -3,9 +3,11 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
 using OpenMoney.Api;
+using OpenMoney.Api.Budget;
 using OpenMoney.Api.Categorie;
 using OpenMoney.Api.Conti;
 using OpenMoney.Api.Movimenti;
+using OpenMoney.Api.Statistiche;
 using OpenMoney.Core.Categorie;
 using OpenMoney.Infrastructure;
 using Scalar.AspNetCore;
@@ -84,6 +86,8 @@ app.MapUsers();
 app.MapAccounts();
 app.MapCategories();
 app.MapMovements();
+app.MapStats();
+app.MapBudgets();
 
 // Documentazione interattiva (Scalar su /scalar): sempre in sviluppo, altrove solo su richiesta esplicita.
 if (app.Environment.IsDevelopment() || app.Configuration.GetValue<bool>("ApiDocs"))

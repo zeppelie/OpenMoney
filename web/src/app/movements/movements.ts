@@ -10,6 +10,8 @@ import { CategoriesService, Category, categoryLabels } from '../categories/categ
 import { Icon } from '../layout/icon';
 import { formDialog } from '../shared/dialogs';
 import { EurPipe } from '../shared/money';
+import { MonthNav } from '../shared/month-nav';
+import { Period, currentPeriod, isoDate, monthLabel } from '../shared/period';
 import { MovementDialog, MovementDialogData } from './movement-dialog';
 import { DayLedger, MonthLedger, MonthTotals, Movement, MovementsService } from './movements.service';
 
@@ -21,28 +23,16 @@ interface CalendarCell {
   expense: number;
 }
 
-const monthName = new Intl.DateTimeFormat('it-IT', { month: 'long' });
 const dayName = new Intl.DateTimeFormat('it-IT', { weekday: 'long', day: 'numeric' });
 const weekdays = ['lun', 'mar', 'mer', 'gio', 'ven', 'sab', 'dom'];
-
-const pad = (n: number) => String(n).padStart(2, '0');
-const isoDate = (year: number, month: number, day: number) => `${year}-${pad(month)}-${pad(day)}`;
 
 /** I movimenti di un mese in tre viste: elenco per giorni, calendario e riepilogo dell'anno. */
 @Component({
   selector: 'app-movements',
-  imports: [EurPipe, Icon, MatButtonModule, MatCardModule, MatTabsModule, RouterLink],
+  imports: [EurPipe, Icon, MatButtonModule, MatCardModule, MatTabsModule, MonthNav, RouterLink],
   template: `
     <main class="page">
-      <div class="month">
-        <button matIconButton type="button" (click)="shift(-1)" aria-label="Mese precedente">
-          <app-icon name="chevronLeft" />
-        </button>
-        <h1>{{ title() }}</h1>
-        <button matIconButton type="button" (click)="shift(1)" aria-label="Mese successivo">
-          <app-icon name="chevronRight" />
-        </button>
-      </div>
+      <app-month-nav [period]="period()" (periodChange)="show($event)" />
 
       <mat-card appearance="outlined">
         <div class="totals">
@@ -131,19 +121,6 @@ const isoDate = (year: number, month: number, day: number) => `${year}-${pad(mon
     </main>
   `,
   styles: `
-    .month {
-      display: flex;
-      align-items: center;
-      gap: 0.25rem;
-    }
-
-    .month h1 {
-      min-width: 11rem;
-      margin: 0;
-      text-align: center;
-      text-transform: capitalize;
-    }
-
     .day {
       margin-top: 0.75rem;
     }
@@ -218,8 +195,10 @@ export class Movements {
   private readonly dialog = inject(MatDialog);
   protected readonly weekdays = weekdays;
 
+  protected readonly monthLabel = monthLabel;
+
   private readonly today = new Date();
-  protected readonly period = signal({ year: this.today.getFullYear(), month: this.today.getMonth() + 1 });
+  protected readonly period = signal(currentPeriod());
   protected readonly tab = signal(0);
   protected readonly loaded = signal(false);
 
@@ -230,8 +209,6 @@ export class Movements {
 
   private readonly accountNames = computed(() => new Map(this.accounts().map((account) => [account.id, account.name])));
   private readonly categoryNames = computed(() => categoryLabels(this.categories()));
-
-  protected readonly title = computed(() => `${this.monthLabel(this.period().month)} ${this.period().year}`);
 
   /** Le caselle del mese, con le vuote necessarie perché il giorno 1 cada sotto il suo giorno della settimana. */
   protected readonly calendar = computed<CalendarCell[]>(() => {
@@ -252,10 +229,6 @@ export class Movements {
     void this.load();
   }
 
-  protected monthLabel(month: number): string {
-    return monthName.format(new Date(2000, month - 1, 1));
-  }
-
   protected dayLabel(day: DayLedger): string {
     return dayName.format(new Date(`${day.date}T00:00`));
   }
@@ -274,17 +247,15 @@ export class Movements {
     return [movement.note, account, movement.author].filter(Boolean).join(' · ');
   }
 
-  protected shift(months: number): Promise<void> {
-    const { year, month } = this.period();
-    const moved = new Date(year, month - 1 + months, 1);
-    this.period.set({ year: moved.getFullYear(), month: moved.getMonth() + 1 });
+  protected show(period: Period): Promise<void> {
+    this.period.set(period);
     return this.load();
   }
 
+  /** Dal riepilogo dell'anno: apre l'elenco dei giorni di quel mese. */
   protected goTo(month: number): Promise<void> {
-    this.period.update((period) => ({ ...period, month }));
     this.tab.set(0);
-    return this.load();
+    return this.show({ ...this.period(), month });
   }
 
   /** Apre il modulo: su un movimento per modificarlo, altrimenti per inserirne uno nella data indicata. */

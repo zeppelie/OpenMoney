@@ -154,6 +154,20 @@ namespace OpenMoney.Infrastructure.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("OpenMoney.Core.Budget.CategoryBudget", b =>
+                {
+                    b.Property<Guid>("CategoryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.HasKey("CategoryId");
+
+                    b.ToTable("Budgets", (string)null);
+                });
+
             modelBuilder.Entity("OpenMoney.Core.Categorie.Category", b =>
                 {
                     b.Property<Guid>("Id")
@@ -369,6 +383,15 @@ namespace OpenMoney.Infrastructure.Migrations
                     b.HasOne("OpenMoney.Infrastructure.AppUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("OpenMoney.Core.Budget.CategoryBudget", b =>
+                {
+                    b.HasOne("OpenMoney.Core.Categorie.Category", null)
+                        .WithOne()
+                        .HasForeignKey("OpenMoney.Core.Budget.CategoryBudget", "CategoryId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

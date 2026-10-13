@@ -13,6 +13,8 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { path: '/', icon: 'list', label: 'Movimenti' },
+  { path: '/statistiche', icon: 'pie', label: 'Statistiche' },
+  { path: '/budget', icon: 'chart', label: 'Budget' },
   { path: '/conti', icon: 'wallet', label: 'Conti' },
   { path: '/categorie', icon: 'label', label: 'Categorie' },
   { path: '/profilo', icon: 'person', label: 'Profilo' },
@@ -20,6 +22,8 @@ const navItems: NavItem[] = [
 
 // Sul desktop il profilo sta a destra, con il nome dell'utente.
 const sections = navItems.filter((item) => item.path !== '/profilo');
+// Sul telefono la barra in basso tiene cinque voci: le categorie si raggiungono dal Profilo.
+const phoneItems = navItems.filter((item) => item.path !== '/categorie');
 
 /**
  * Cornice delle pagine riservate. Su schermo largo: barra in alto con tutte le voci.
@@ -53,7 +57,7 @@ const sections = navItems.filter((item) => item.path !== '/profilo');
     <router-outlet />
 
     <nav class="bottom-nav" aria-label="Sezioni dell'app">
-      @for (item of navItems; track item.path) {
+      @for (item of phoneItems; track item.path) {
         <a
           [routerLink]="item.path"
           routerLinkActive="active"
@@ -141,7 +145,7 @@ const sections = navItems.filter((item) => item.path !== '/profilo');
 export class Shell {
   protected readonly auth = inject(AuthService);
   private readonly router = inject(Router);
-  protected readonly navItems = navItems;
+  protected readonly phoneItems = phoneItems;
   protected readonly sections = sections;
 
   protected async logout(): Promise<void> {

@@ -8,9 +8,6 @@ namespace OpenMoney.Api.Movimenti;
 
 public static class MovementEndpoints
 {
-    private const int FirstYear = 1990;
-    private const int LastYear = 2100;
-
     /// <param name="Author">Nome di chi ha inserito il movimento; null se quell'utente non esiste più.</param>
     public sealed record MovementResponse(
         Guid Id, DateOnly Date, MovementKind Kind, decimal Amount, Guid AccountId, Guid? ToAccountId, Guid? CategoryId,
@@ -26,12 +23,11 @@ public static class MovementEndpoints
 
         movements.MapGet("", async (int year, int month, AppDbContext db, CancellationToken ct) =>
         {
-            if (year is < FirstYear or > LastYear || month is < 1 or > 12)
+            if (Periods.Month(year, month) is not { } period)
                 return Results.BadRequest();
 
-            var from = new DateOnly(year, month, 1);
-            var to = from.AddMonths(1);
-            var ledger = MonthLedger.From(await db.Movements.Where(m => m.Date >= from && m.Date < to).ToListAsync(ct));
+            var ledger = MonthLedger.From(
+                await db.Movements.Where(m => m.Date >= period.From && m.Date < period.To).ToListAsync(ct));
             var authors = await db.Users.ToDictionaryAsync(u => u.Id, u => u.DisplayName ?? u.Email, ct);
 
             return Results.Ok(new MonthResponse(ledger.Income, ledger.Expense,
@@ -43,13 +39,11 @@ public static class MovementEndpoints
 
         movements.MapGet("years/{year:int}", async (int year, AppDbContext db, CancellationToken ct) =>
         {
-            if (year is < FirstYear or > LastYear)
+            if (Periods.Year(year) is not { } period)
                 return Results.BadRequest();
 
-            var from = new DateOnly(year, 1, 1);
-            var to = from.AddYears(1);
             var totals = await db.Movements
-                .Where(m => m.Date >= from && m.Date < to)
+                .Where(m => m.Date >= period.From && m.Date < period.To)
                 .GroupBy(m => new { m.Date.Month, m.Kind })
                 .Select(g => new { g.Key.Month, g.Key.Kind, Total = g.Sum(m => m.Amount) })
                 .ToListAsync(ct);

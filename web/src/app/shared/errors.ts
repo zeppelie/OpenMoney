@@ -31,6 +31,7 @@ const messages: Record<string, string> = {
   CategoryInUse: 'La categoria ha dei movimenti: non si può eliminare.',
   CategoryHasChildren: 'Elimina o sposta prima le sottocategorie.',
   InvalidParentCategory: 'La categoria superiore non è valida.',
+  InvalidBudgetCategory: 'Il budget si imposta solo sulle categorie di uscita principali.',
   CategoryKindLocked: 'Il tipo di una categoria esistente non si può cambiare.',
 };
 
