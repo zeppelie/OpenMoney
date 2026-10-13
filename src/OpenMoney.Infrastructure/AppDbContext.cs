@@ -4,6 +4,7 @@ using OpenMoney.Core.Budget;
 using OpenMoney.Core.Categorie;
 using OpenMoney.Core.Conti;
 using OpenMoney.Core.Movimenti;
+using OpenMoney.Core.Ricorrenze;
 
 namespace OpenMoney.Infrastructure;
 
@@ -14,6 +15,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<Category> Categories => Set<Category>();
     public DbSet<Movement> Movements => Set<Movement>();
     public DbSet<CategoryBudget> Budgets => Set<CategoryBudget>();
+    public DbSet<Recurrence> Recurrences => Set<Recurrence>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

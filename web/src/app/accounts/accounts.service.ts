@@ -18,6 +18,10 @@ export interface AccountInput {
   name: string;
   group: AccountGroup;
   initialBalance: number;
+  /** Solo per le carte: il conto su cui ogni mese si addebitano le spese del mese prima; null senza addebito automatico. */
+  settlementAccountId: string | null;
+  /** Giorno del mese (1-28) in cui avviene l'addebito; va insieme al conto. */
+  settlementDay: number | null;
 }
 
 export interface Account extends AccountInput {

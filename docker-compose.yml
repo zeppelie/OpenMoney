@@ -1,4 +1,4 @@
-﻿services:
+services:
   db:
     image: postgres:17-alpine
     restart: unless-stopped
@@ -26,6 +26,8 @@
     environment:
       ConnectionStrings__Default: Host=db;Database=openmoney;Username=openmoney;Password=${POSTGRES_PASSWORD}
       DataProtection__KeysPath: /keys
+      # Ricorrenze e addebiti delle carte maturano alla mezzanotte italiana, non a quella UTC.
+      TZ: ${TZ:-Europe/Rome}
       ApiDocs: ${API_DOCS:-false}
     volumes:
       - keys:/keys

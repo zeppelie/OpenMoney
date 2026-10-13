@@ -6,7 +6,9 @@ namespace OpenMoney.Api.Conti;
 
 public static class AccountEndpoints
 {
-    public sealed record AccountResponse(Guid Id, string Name, AccountGroup Group, decimal InitialBalance, decimal Balance);
+    public sealed record AccountResponse(
+        Guid Id, string Name, AccountGroup Group, decimal InitialBalance, Guid? SettlementAccountId, int? SettlementDay,
+        decimal Balance);
 
     public sealed record AccountsResponse(NetWorth NetWorth, IReadOnlyList<AccountResponse> Accounts);
 
@@ -16,47 +18,35 @@ public static class AccountEndpoints
 
         accounts.MapGet("", async (AppDbContext db, CancellationToken ct) =>
         {
-            var all = await db.Accounts.OrderBy(a => a.Name).ToListAsync(ct);
-            var fromAccount = (await db.Movements
-                    .GroupBy(m => new { m.AccountId, m.Kind })
-                    .Select(g => new { g.Key.AccountId, g.Key.Kind, Total = g.Sum(m => m.Amount) })
-                    .ToListAsync(ct))
-                .ToLookup(t => t.AccountId, t => (t.Kind, t.Total));
-            var transfersIn = await db.Movements
-                .Where(m => m.ToAccountId != null)
-                .GroupBy(m => m.ToAccountId!.Value)
-                .Select(g => new { AccountId = g.Key, Total = g.Sum(m => m.Amount) })
-                .ToDictionaryAsync(t => t.AccountId, t => t.Total, ct);
-
-            var responses = all
+            var balances = await AccountBalances.LoadAsync(db, upTo: null, ct);
+            var responses = (await db.Accounts.OrderBy(a => a.Name).ToListAsync(ct))
                 .Select(a => new AccountResponse(
-                    a.Id, a.Name, a.Group, a.InitialBalance,
-                    Balances.Of(a.InitialBalance, fromAccount[a.Id], transfersIn.GetValueOrDefault(a.Id))))
+                    a.Id, a.Name, a.Group, a.InitialBalance, a.SettlementAccountId, a.SettlementDay, balances[a.Id]))
                 .ToList();
             return new AccountsResponse(NetWorth.From(responses.Select(a => a.Balance)), responses);
         });
 
-        accounts.MapPost("", async (AccountValues values, AppDbContext db, CancellationToken ct) =>
+        accounts.MapPost("", async (AccountValues values, AppDbContext db, TimeProvider time, CancellationToken ct) =>
         {
             values = values.Normalized();
-            if (Problems.From(values.Validate()) is { } problem)
+            if (await ProblemAsync(values, id: null, db, ct) is { } problem)
                 return problem;
 
-            var account = new Account(values);
+            var account = new Account(values, time.Today());
             db.Accounts.Add(account);
             await db.SaveChangesAsync(ct);
             return Results.Created($"/api/accounts/{account.Id}", new { account.Id });
         });
 
-        accounts.MapPut("{id:guid}", async (Guid id, AccountValues values, AppDbContext db, CancellationToken ct) =>
+        accounts.MapPut("{id:guid}", async (Guid id, AccountValues values, AppDbContext db, TimeProvider time, CancellationToken ct) =>
         {
             values = values.Normalized();
-            if (Problems.From(values.Validate()) is { } problem)
+            if (await ProblemAsync(values, id, db, ct) is { } problem)
                 return problem;
             if (await db.Accounts.FindAsync([id], ct) is not { } account)
                 return Results.NotFound();
 
-            account.Update(values);
+            account.Update(values, time.Today());
             await db.SaveChangesAsync(ct);
             return Results.NoContent();
         });
@@ -65,12 +55,27 @@ public static class AccountEndpoints
         {
             if (await db.Accounts.FindAsync([id], ct) is not { } account)
                 return Results.NotFound();
-            if (await db.Movements.AnyAsync(m => m.AccountId == id || m.ToAccountId == id, ct))
+            if (await db.Movements.AnyAsync(m => m.AccountId == id || m.ToAccountId == id, ct)
+                || await db.Recurrences.AnyAsync(r => r.AccountId == id || r.ToAccountId == id, ct)
+                || await db.Accounts.AnyAsync(a => a.SettlementAccountId == id, ct))
                 return Problems.Of("AccountInUse");
 
             db.Accounts.Remove(account);
             await db.SaveChangesAsync(ct);
             return Results.NoContent();
         });
+    }
+
+    /// <param name="id">Il conto che si sta modificando; null se è nuovo.</param>
+    private static async Task<IResult?> ProblemAsync(AccountValues values, Guid? id, AppDbContext db, CancellationToken ct)
+    {
+        var errors = values.Validate().ToList();
+        if (values.SettlementAccountId is { } settlementId)
+        {
+            if (settlementId == id) errors.Add("SameAccount");
+            else if (!await db.Accounts.AnyAsync(a => a.Id == settlementId, ct)) errors.Add("UnknownAccount");
+        }
+
+        return Problems.From(errors);
     }
 }

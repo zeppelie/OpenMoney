@@ -45,6 +45,17 @@ export interface MonthTotals {
   expense: number;
 }
 
+/** Come si intitola un movimento in un elenco: la categoria, o i due conti di un trasferimento. */
+export function movementTitle(
+  movement: MovementInput,
+  accountNames: Map<string, string>,
+  categoryNames: Map<string, string>,
+): string {
+  return movement.kind === 'Transfer'
+    ? `${accountNames.get(movement.accountId)} → ${accountNames.get(movement.toAccountId!)}`
+    : (categoryNames.get(movement.categoryId!) ?? '');
+}
+
 @Injectable({ providedIn: 'root' })
 export class MovementsService {
   private readonly http = inject(HttpClient);

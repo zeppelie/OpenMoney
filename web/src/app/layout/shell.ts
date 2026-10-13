@@ -11,19 +11,21 @@ interface NavItem {
   label: string;
 }
 
-const navItems: NavItem[] = [
+// Sul telefono la barra in basso tiene cinque voci: categorie e ricorrenze si raggiungono dal Profilo.
+const phoneItems: NavItem[] = [
   { path: '/', icon: 'list', label: 'Movimenti' },
   { path: '/statistiche', icon: 'pie', label: 'Statistiche' },
   { path: '/budget', icon: 'chart', label: 'Budget' },
   { path: '/conti', icon: 'wallet', label: 'Conti' },
-  { path: '/categorie', icon: 'label', label: 'Categorie' },
   { path: '/profilo', icon: 'person', label: 'Profilo' },
 ];
 
-// Sul desktop il profilo sta a destra, con il nome dell'utente.
-const sections = navItems.filter((item) => item.path !== '/profilo');
-// Sul telefono la barra in basso tiene cinque voci: le categorie si raggiungono dal Profilo.
-const phoneItems = navItems.filter((item) => item.path !== '/categorie');
+// Sul desktop c'è posto per tutte le sezioni; il profilo sta a destra, con il nome dell'utente.
+const sections = [
+  ...phoneItems.filter((item) => item.path !== '/profilo'),
+  { path: '/categorie', label: 'Categorie' },
+  { path: '/ricorrenze', label: 'Ricorrenze' },
+];
 
 /**
  * Cornice delle pagine riservate. Su schermo largo: barra in alto con tutte le voci.

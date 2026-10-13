@@ -32,6 +32,11 @@ const messages: Record<string, string> = {
   CategoryHasChildren: 'Elimina o sposta prima le sottocategorie.',
   InvalidParentCategory: 'La categoria superiore non è valida.',
   InvalidBudgetCategory: 'Il budget si imposta solo sulle categorie di uscita principali.',
+  InvalidSettlement: "Per l'addebito automatico servono un conto e un giorno tra 1 e 28.",
+  InvalidFrequency: 'Scegli ogni quanto ripetere il movimento.',
+  InvalidOccurrences: 'Il numero di volte deve essere tra 1 e 600.',
+  InvalidEndDate: 'La data di fine non può venire prima della prima data.',
+  RecurrenceScheduleLocked: 'Prima data e frequenza di una ricorrenza non si possono cambiare.',
   CategoryKindLocked: 'Il tipo di una categoria esistente non si può cambiare.',
 };
 

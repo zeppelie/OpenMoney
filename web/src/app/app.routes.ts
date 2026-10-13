@@ -13,6 +13,10 @@ export const routes: Routes = [
       { path: 'budget', loadComponent: () => import('./budget/budget').then((m) => m.Budget) },
       { path: 'conti', loadComponent: () => import('./accounts/accounts').then((m) => m.Accounts) },
       { path: 'categorie', loadComponent: () => import('./categories/categories').then((m) => m.Categories) },
+      {
+        path: 'ricorrenze',
+        loadComponent: () => import('./recurrences/recurrences').then((m) => m.Recurrences),
+      },
       { path: 'profilo', loadComponent: () => import('./profile/profile').then((m) => m.Profile) },
     ],
   },

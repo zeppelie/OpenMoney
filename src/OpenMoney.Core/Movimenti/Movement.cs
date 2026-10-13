@@ -69,12 +69,12 @@ public sealed class Movement
     public Guid? CategoryId { get; private set; }
     public string? Note { get; private set; }
 
-    /// <summary>Chi l'ha inserito; null se quell'utente non esiste più.</summary>
+    /// <summary>Chi l'ha inserito; null se l'ha generato l'app (addebito di una carta) o se quell'utente non esiste più.</summary>
     public string? AuthorId { get; private set; }
 
     public DateTimeOffset CreatedAt { get; private set; }
 
-    public Movement(MovementValues values, string authorId, DateTimeOffset createdAt)
+    public Movement(MovementValues values, string? authorId, DateTimeOffset createdAt)
     {
         Id = Guid.CreateVersion7();
         AuthorId = authorId;

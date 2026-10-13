@@ -14,5 +14,8 @@ public sealed class AccountConfiguration : IEntityTypeConfiguration<Account>
         builder.Property(a => a.Name).HasMaxLength(AccountValues.NameMaxLength);
         builder.Property(a => a.Group).HasConversion<string>().HasMaxLength(20);
         builder.Property(a => a.InitialBalance).HasPrecision(12, 2);
+
+        // Il conto su cui si addebita una carta non si elimina finché la carta lo usa.
+        builder.HasOne<Account>().WithMany().HasForeignKey(a => a.SettlementAccountId).OnDelete(DeleteBehavior.Restrict);
     }
 }

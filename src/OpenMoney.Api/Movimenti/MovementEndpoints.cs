@@ -87,7 +87,15 @@ public static class MovementEndpoints
         });
     }
 
-    private static async Task<IResult?> ProblemAsync(MovementValues values, AppDbContext db, CancellationToken ct)
+    private static async Task<IResult?> ProblemAsync(MovementValues values, AppDbContext db, CancellationToken ct) =>
+        Problems.From(await ErrorsAsync(values, values.Validate, db, ct));
+
+    /// <summary>
+    /// Errori di un movimento, o di ciò che lo contiene (una ricorrenza): <paramref name="validate"/> riceve il tipo
+    /// della categoria indicata, e in più si controlla che i conti esistano.
+    /// </summary>
+    internal static async Task<IReadOnlyList<string>> ErrorsAsync(
+        MovementValues values, Func<CategoryKind?, IReadOnlyList<string>> validate, AppDbContext db, CancellationToken ct)
     {
         Guid[] accountIds = values.ToAccountId is { } to ? [values.AccountId, to] : [values.AccountId];
         var knownAccounts = await db.Accounts.CountAsync(a => accountIds.Contains(a.Id), ct);
@@ -95,8 +103,8 @@ public static class MovementEndpoints
             ? (await db.Categories.FindAsync([categoryId], ct))?.Kind
             : null;
 
-        var errors = values.Validate(categoryKind);
-        return Problems.From(knownAccounts < accountIds.Distinct().Count() ? [.. errors, "UnknownAccount"] : errors);
+        var errors = validate(categoryKind);
+        return knownAccounts < accountIds.Distinct().Count() ? [.. errors, "UnknownAccount"] : errors;
     }
 
     private static MovementResponse ToResponse(Movement m, Dictionary<string, string?> authors) =>

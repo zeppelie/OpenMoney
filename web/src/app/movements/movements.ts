@@ -13,7 +13,7 @@ import { EurPipe } from '../shared/money';
 import { MonthNav } from '../shared/month-nav';
 import { Period, currentPeriod, isoDate, monthLabel } from '../shared/period';
 import { MovementDialog, MovementDialogData } from './movement-dialog';
-import { DayLedger, MonthLedger, MonthTotals, Movement, MovementsService } from './movements.service';
+import { DayLedger, MonthLedger, MonthTotals, Movement, MovementsService, movementTitle } from './movements.service';
 
 interface CalendarCell {
   /** Giorno del mese; null per le caselle vuote prima del giorno 1. */
@@ -235,10 +235,7 @@ export class Movements {
 
   /** Prima riga di un movimento: la categoria, o i due conti di un trasferimento. */
   protected what(movement: Movement): string {
-    const account = this.accountNames().get(movement.accountId);
-    return movement.kind === 'Transfer'
-      ? `${account} → ${this.accountNames().get(movement.toAccountId!)}`
-      : (this.categoryNames().get(movement.categoryId!) ?? '');
+    return movementTitle(movement, this.accountNames(), this.categoryNames());
   }
 
   /** Seconda riga: nota, conto e chi l'ha inserito. */
@@ -260,7 +257,13 @@ export class Movements {
 
   /** Apre il modulo: su un movimento per modificarlo, altrimenti per inserirne uno nella data indicata. */
   protected async open(movement: Movement | null, date = this.defaultDate()): Promise<void> {
-    const data: MovementDialogData = { movement, date, accounts: this.accounts(), categories: this.categories() };
+    const data: MovementDialogData = {
+      movement,
+      recurrence: null,
+      date,
+      accounts: this.accounts(),
+      categories: this.categories(),
+    };
     if (await firstValueFrom(this.dialog.open(MovementDialog, formDialog(data)).afterClosed())) await this.load();
   }
 

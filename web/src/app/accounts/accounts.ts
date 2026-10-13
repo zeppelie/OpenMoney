@@ -6,7 +6,7 @@ import { firstValueFrom } from 'rxjs';
 import { Icon } from '../layout/icon';
 import { formDialog } from '../shared/dialogs';
 import { EurPipe } from '../shared/money';
-import { AccountDialog } from './account-dialog';
+import { AccountDialog, AccountDialogData } from './account-dialog';
 import { Account, AccountsOverview, AccountsService, accountGroups } from './accounts.service';
 
 @Component({
@@ -71,7 +71,8 @@ export class Accounts {
   }
 
   protected async open(account: Account | null): Promise<void> {
-    const saved = await firstValueFrom(this.dialog.open(AccountDialog, formDialog(account)).afterClosed());
+    const data: AccountDialogData = { account, accounts: this.overview()?.accounts ?? [] };
+    const saved = await firstValueFrom(this.dialog.open(AccountDialog, formDialog(data)).afterClosed());
     if (saved) await this.load();
   }
 

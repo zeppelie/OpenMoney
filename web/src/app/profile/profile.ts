@@ -30,6 +30,7 @@ import { Users } from './users';
           <div class="actions">
             <button matButton="filled" type="submit">Salva</button>
             <a matButton routerLink="/categorie">Categorie</a>
+            <a matButton routerLink="/ricorrenze">Ricorrenze e rate</a>
             <button matButton type="button" (click)="logout()">Esci</button>
           </div>
         </form>

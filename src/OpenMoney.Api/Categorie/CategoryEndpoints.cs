@@ -49,7 +49,7 @@ public static class CategoryEndpoints
                 return Results.NotFound();
             if (await db.Categories.AnyAsync(c => c.ParentId == id, ct))
                 return Problems.Of("CategoryHasChildren");
-            if (await db.Movements.AnyAsync(m => m.CategoryId == id, ct))
+            if (await db.Movements.AnyAsync(m => m.CategoryId == id, ct) || await db.Recurrences.AnyAsync(r => r.CategoryId == id, ct))
                 return Problems.Of("CategoryInUse");
 
             db.Categories.Remove(category);

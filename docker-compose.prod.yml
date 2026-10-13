@@ -26,6 +26,8 @@ services:
     environment:
       ConnectionStrings__Default: Host=db;Database=openmoney;Username=openmoney;Password=${POSTGRES_PASSWORD}
       DataProtection__KeysPath: /keys
+      # Ricorrenze e addebiti delle carte maturano alla mezzanotte italiana, non a quella UTC.
+      TZ: ${TZ:-Europe/Rome}
       # L'app si fida delle intestazioni X-Forwarded-* del proxy: sa di essere servita in HTTPS e marca
       # "Secure" il cookie di login. È sicuro solo perché l'app non è raggiungibile se non tramite il proxy.
       ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"

@@ -7,6 +7,7 @@ using OpenMoney.Api.Budget;
 using OpenMoney.Api.Categorie;
 using OpenMoney.Api.Conti;
 using OpenMoney.Api.Movimenti;
+using OpenMoney.Api.Ricorrenze;
 using OpenMoney.Api.Statistiche;
 using OpenMoney.Core.Categorie;
 using OpenMoney.Infrastructure;
@@ -48,6 +49,10 @@ if (keysPath is not null)
 // Tipi e gruppi viaggiano come nomi ("Expense"), non come numeri che cambierebbero significato riordinando un enum.
 builder.Services.ConfigureHttpJsonOptions(o => o.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddScoped<ScheduledMovements>();
+builder.Services.AddHostedService<ScheduledMovementsWorker>();
+
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
@@ -88,6 +93,7 @@ app.MapCategories();
 app.MapMovements();
 app.MapStats();
 app.MapBudgets();
+app.MapRecurrences();
 
 // Documentazione interattiva (Scalar su /scalar): sempre in sviluppo, altrove solo su richiesta esplicita.
 if (app.Environment.IsDevelopment() || app.Configuration.GetValue<bool>("ApiDocs"))
