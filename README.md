@@ -16,6 +16,8 @@ Alternativa self-hosted a Money Manager: entrate, uscite, conti e budget della f
 - Ricorrenze e rate: nel modulo di un movimento "Ripeti" lo fa tornare ogni settimana, mese o anno; con un numero di volte è un piano di rate (l'importo è quello di ogni rata). I movimenti maturati li crea l'app, all'avvio e poi ogni ora; l'elenco è in **Ricorrenze** (dal Profilo, sul telefono).
 - Carte di credito a saldo: indicando su una carta il conto e il giorno di addebito, ogni mese l'app registra da sola il trasferimento che salda le spese del mese solare precedente. Collegando una carta si parte dal primo estratto il cui addebito non è ancora passato.
 - Ricerca (la lente nella pagina dei movimenti): per testo della nota, periodo, conto, categoria e tipo. Il risultato si esporta in CSV, nel formato che Excel in italiano apre direttamente.
+- Modelli: nel modulo di un movimento "Salva come modello" ricorda tipo, conto, categoria, nota e (se c'è) importo; "Da un modello" li ricompila. Si eliminano dal Profilo.
+- Scontrini: a ogni movimento si allegano foto (JPEG, PNG, WebP, HEIC) o PDF fino a 10 MB; sul telefono "Allega scontrino" propone anche la fotocamera. I file stanno nel volume Docker `attachments`, fuori dal database.
 - Conti, categorie e movimenti sono condivisi da tutta la famiglia; ogni movimento ricorda chi l'ha inserito.
 
 - Al primo avvio chi apre l'app crea l'account dell'amministratore; poi gli altri utenti li aggiunge lui da **Profilo → Utenti**. Non c'è registrazione libera.
@@ -75,10 +77,13 @@ dotnet run --project src/OpenMoney.Api      # http://localhost:5090
 cd web && npm install && npm start          # http://localhost:4200, /api passa al backend
 ```
 
-## Backup del database
+## Backup
+
+Database e scontrini allegati vanno salvati insieme (aggiungi `-f docker-compose.prod.yml -f docker-compose.override.yml` sul server):
 
 ```
 docker compose exec -T db pg_dump -U openmoney openmoney | gzip > openmoney-$(date +%F).sql.gz
+docker compose exec -T app tar -czf - -C /attachments . > openmoney-allegati-$(date +%F).tar.gz
 ```
 
 ## Struttura

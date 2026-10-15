@@ -6,3 +6,4 @@ web/.angular/
 .vs/
 .idea/
 .env
+src/OpenMoney.Api/attachments/

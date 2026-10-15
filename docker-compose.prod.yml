@@ -26,6 +26,8 @@ services:
     environment:
       ConnectionStrings__Default: Host=db;Database=openmoney;Username=openmoney;Password=${POSTGRES_PASSWORD}
       DataProtection__KeysPath: /keys
+      # Foto degli scontrini e altri allegati: vanno salvate insieme al database (vedi README, Backup).
+      Attachments__Path: /attachments
       # Ricorrenze e addebiti delle carte maturano alla mezzanotte italiana, non a quella UTC.
       TZ: ${TZ:-Europe/Rome}
       # L'app si fida delle intestazioni X-Forwarded-* del proxy: sa di essere servita in HTTPS e marca
@@ -33,6 +35,7 @@ services:
       ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
     volumes:
       - keys:/keys
+      - attachments:/attachments
     # L'immagine aspnet non ha curl: basta verificare che la porta accetti connessioni.
     healthcheck:
       test: ["CMD", "bash", "-c", "echo > /dev/tcp/localhost/8080"]
@@ -46,3 +49,4 @@ services:
 volumes:
   db-data:
   keys:
+  attachments:

@@ -8,11 +8,12 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../auth/auth.service';
 import { errorMessages } from '../shared/errors';
+import { Templates } from './templates';
 import { Users } from './users';
 
 @Component({
   selector: 'app-profile',
-  imports: [ReactiveFormsModule, MatButtonModule, MatCardModule, MatFormFieldModule, MatInputModule, RouterLink, Users],
+  imports: [ReactiveFormsModule, MatButtonModule, MatCardModule, MatFormFieldModule, MatInputModule, RouterLink, Templates, Users],
   template: `
     <main class="page">
       <h1>Profilo</h1>
@@ -55,6 +56,8 @@ import { Users } from './users';
           </div>
         </form>
       </mat-card>
+
+      <app-templates />
 
       @if (auth.user()?.isAdmin) {
         <app-users />

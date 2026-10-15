@@ -37,6 +37,9 @@ const messages: Record<string, string> = {
   InvalidOccurrences: 'Il numero di volte deve essere tra 1 e 600.',
   InvalidEndDate: 'La data di fine non può venire prima della prima data.',
   RecurrenceScheduleLocked: 'Prima data e frequenza di una ricorrenza non si possono cambiare.',
+  UnsupportedFileType: 'Si possono allegare solo foto (JPEG, PNG, WebP, HEIC) e PDF.',
+  EmptyFile: 'Il file è vuoto.',
+  FileTooLarge: 'Il file è troppo grande (massimo 10 MB).',
   CategoryKindLocked: 'Il tipo di una categoria esistente non si può cambiare.',
 };
 

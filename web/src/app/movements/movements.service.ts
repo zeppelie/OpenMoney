@@ -18,10 +18,19 @@ export interface MovementInput {
   note: string | null;
 }
 
+/** Un file allegato a un movimento: si apre da `/api/attachments/{id}`. */
+export interface AttachmentInfo {
+  id: string;
+  fileName: string;
+  contentType: string;
+  size: number;
+}
+
 export interface Movement extends MovementInput {
   id: string;
   /** Nome di chi l'ha inserito. */
   author: string | null;
+  attachments: AttachmentInfo[];
 }
 
 export interface DayLedger {
@@ -101,11 +110,26 @@ export class MovementsService {
   }
 
   /** Con `id` modifica il movimento, senza ne crea uno. */
-  save(input: MovementInput, id?: string): Promise<unknown> {
-    return firstValueFrom(id ? this.http.put(`/api/movements/${id}`, input) : this.http.post('/api/movements', input));
+  /** Restituisce l'identificativo del movimento, anche se appena creato. */
+  async save(input: MovementInput, id?: string): Promise<string> {
+    if (id) {
+      await firstValueFrom(this.http.put(`/api/movements/${id}`, input));
+      return id;
+    }
+    return (await firstValueFrom(this.http.post<{ id: string }>('/api/movements', input))).id;
   }
 
   remove(id: string): Promise<unknown> {
     return firstValueFrom(this.http.delete(`/api/movements/${id}`));
+  }
+
+  attach(movementId: string, file: File): Promise<unknown> {
+    const form = new FormData();
+    form.append('file', file);
+    return firstValueFrom(this.http.post(`/api/movements/${movementId}/attachments`, form));
+  }
+
+  removeAttachment(id: string): Promise<unknown> {
+    return firstValueFrom(this.http.delete(`/api/attachments/${id}`));
   }
 }

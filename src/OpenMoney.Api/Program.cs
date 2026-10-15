@@ -6,11 +6,13 @@ using OpenMoney.Api;
 using OpenMoney.Api.Budget;
 using OpenMoney.Api.Categorie;
 using OpenMoney.Api.Conti;
+using OpenMoney.Api.Modelli;
 using OpenMoney.Api.Movimenti;
 using OpenMoney.Api.Ricorrenze;
 using OpenMoney.Api.Statistiche;
 using OpenMoney.Core.Categorie;
 using OpenMoney.Infrastructure;
+using OpenMoney.Infrastructure.Movimenti;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -50,6 +52,8 @@ if (keysPath is not null)
 builder.Services.ConfigureHttpJsonOptions(o => o.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
 builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddSingleton(new AttachmentStore(
+    builder.Configuration["Attachments:Path"] ?? Path.Combine(builder.Environment.ContentRootPath, "attachments")));
 builder.Services.AddScoped<ScheduledMovements>();
 builder.Services.AddHostedService<ScheduledMovementsWorker>();
 
@@ -92,6 +96,8 @@ app.MapAccounts();
 app.MapCategories();
 app.MapMovements();
 app.MapMovementSearch();
+app.MapAttachments();
+app.MapTemplates();
 app.MapStats();
 app.MapBudgets();
 app.MapRecurrences();

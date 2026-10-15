@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using OpenMoney.Core.Categorie;
 using OpenMoney.Core.Movimenti;
 using OpenMoney.Infrastructure;
+using OpenMoney.Infrastructure.Movimenti;
 
 namespace OpenMoney.Api.Movimenti;
 
@@ -11,7 +12,7 @@ public static class MovementEndpoints
     /// <param name="Author">Nome di chi ha inserito il movimento; null se quell'utente non esiste più.</param>
     public sealed record MovementResponse(
         Guid Id, DateOnly Date, MovementKind Kind, decimal Amount, Guid AccountId, Guid? ToAccountId, Guid? CategoryId,
-        string? Note, string? Author);
+        string? Note, string? Author, IReadOnlyList<AttachmentEndpoints.AttachmentResponse> Attachments);
 
     public sealed record DayResponse(DateOnly Date, decimal Income, decimal Expense, IReadOnlyList<MovementResponse> Movements);
 
@@ -69,27 +70,33 @@ public static class MovementEndpoints
             return Results.NoContent();
         });
 
-        movements.MapDelete("{id:guid}", async (Guid id, AppDbContext db, CancellationToken ct) =>
+        movements.MapDelete("{id:guid}", async (Guid id, AppDbContext db, AttachmentStore store, CancellationToken ct) =>
         {
             if (await db.Movements.FindAsync([id], ct) is not { } movement)
                 return Results.NotFound();
 
+            // Le righe degli allegati le toglie il database insieme al movimento; i file vanno tolti a mano, dopo.
+            var attachmentIds = await db.Attachments.Where(a => a.MovementId == id).Select(a => a.Id).ToListAsync(ct);
             db.Movements.Remove(movement);
             await db.SaveChangesAsync(ct);
+            attachmentIds.ForEach(store.Delete);
             return Results.NoContent();
         });
     }
 
-    /// <summary>I movimenti raggruppati per giorno con i totali, e il nome di chi li ha inseriti.</summary>
+    /// <summary>I movimenti raggruppati per giorno con i totali, il nome di chi li ha inseriti e i loro allegati.</summary>
     internal static async Task<MonthResponse> LedgerResponseAsync(IEnumerable<Movement> movements, AppDbContext db, CancellationToken ct)
     {
         var ledger = MonthLedger.From(movements);
         var authors = await db.Users.ToDictionaryAsync(u => u.Id, u => u.DisplayName ?? u.Email, ct);
+        var movementIds = ledger.Days.SelectMany(d => d.Movements).Select(m => m.Id).ToList();
+        var attachments = (await db.Attachments.Where(a => movementIds.Contains(a.MovementId)).OrderBy(a => a.CreatedAt).ToListAsync(ct))
+            .ToLookup(a => a.MovementId, AttachmentEndpoints.ToResponse);
 
         return new(ledger.Income, ledger.Expense,
         [
             .. ledger.Days.Select(day => new DayResponse(day.Date, day.Income, day.Expense,
-                [.. day.Movements.Select(m => ToResponse(m, authors))])),
+                [.. day.Movements.Select(m => ToResponse(m, authors, [.. attachments[m.Id]]))])),
         ]);
     }
 
@@ -113,7 +120,8 @@ public static class MovementEndpoints
         return knownAccounts < accountIds.Distinct().Count() ? [.. errors, "UnknownAccount"] : errors;
     }
 
-    private static MovementResponse ToResponse(Movement m, Dictionary<string, string?> authors) =>
+    private static MovementResponse ToResponse(
+        Movement m, Dictionary<string, string?> authors, IReadOnlyList<AttachmentEndpoints.AttachmentResponse> attachments) =>
         new(m.Id, m.Date, m.Kind, m.Amount, m.AccountId, m.ToAccountId, m.CategoryId, m.Note,
-            m.AuthorId is { } authorId ? authors.GetValueOrDefault(authorId) : null);
+            m.AuthorId is { } authorId ? authors.GetValueOrDefault(authorId) : null, attachments);
 }

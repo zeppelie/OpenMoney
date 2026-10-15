@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, input, output } from '@an
 import { MatCardModule } from '@angular/material/card';
 import { Account } from '../accounts/accounts.service';
 import { Category, categoryLabels } from '../categories/categories.service';
+import { Icon } from '../layout/icon';
 import { EurPipe } from '../shared/money';
 import { DayLedger, Movement, movementTitle } from './movements.service';
 
@@ -11,7 +12,7 @@ const dayName = new Intl.DateTimeFormat('it-IT', { weekday: 'long', day: 'numeri
 @Component({
   selector: 'app-day-list',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [EurPipe, MatCardModule],
+  imports: [EurPipe, Icon, MatCardModule],
   template: `
     @for (day of days(); track day.date) {
       <mat-card appearance="outlined">
@@ -25,7 +26,12 @@ const dayName = new Intl.DateTimeFormat('it-IT', { weekday: 'long', day: 'numeri
         @for (movement of day.movements; track movement.id) {
           <button type="button" class="row" (click)="opened.emit(movement)">
             <span class="what">
-              <span>{{ title(movement) }}</span>
+              <span class="title">
+                {{ title(movement) }}
+                @if (movement.attachments.length) {
+                  <app-icon name="attach" class="clip" [attr.title]="movement.attachments.length + ' allegati'" />
+                }
+              </span>
               <span class="muted">{{ details(movement) }}</span>
             </span>
             <span [class]="movement.kind.toLowerCase()">{{ movement.amount | eur }}</span>
@@ -54,6 +60,18 @@ const dayName = new Intl.DateTimeFormat('it-IT', { weekday: 'long', day: 'numeri
       flex: 1;
       flex-direction: column;
       min-width: 0;
+    }
+
+    .title {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .clip {
+      width: 1rem;
+      height: 1rem;
+      color: var(--mat-sys-on-surface-variant);
     }
 
     .what .muted {
