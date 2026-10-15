@@ -3,6 +3,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatDialog } from '@angular/material/dialog';
 import { firstValueFrom } from 'rxjs';
 import { formDialog } from '../shared/dialogs';
+import { Meter } from '../shared/meter';
 import { EurPipe } from '../shared/money';
 import { MonthNav } from '../shared/month-nav';
 import { Period, currentPeriod } from '../shared/period';
@@ -12,41 +13,47 @@ import { BudgetLine, BudgetService, BudgetStatus } from './budget.service';
 /** Quanto si è speso nel mese rispetto al budget di ogni categoria di uscita. */
 @Component({
   selector: 'app-budget',
-  imports: [EurPipe, MatCardModule, MonthNav],
+  imports: [EurPipe, MatCardModule, Meter, MonthNav],
   template: `
     <main class="page">
-      <app-month-nav [period]="period()" (periodChange)="show($event)" />
+      <app-month-nav [period]="period()" (periodChange)="show($event)">
+        @if (status(); as status) {
+          @if (status.budget) {
+            <div class="summary">
+              <p class="figures">
+                <strong class="amount">{{ status.spent | eur }}</strong>
+                <span>spesi su {{ status.budget | eur }} di budget</span>
+              </p>
+              <app-meter [value]="status.spent" [max]="status.budget" aria-label="Spesa rispetto al budget" />
+              <p>
+                {{ status.remaining < 0 ? 'Budget sforato di' : 'Restano' }} {{ abs(status.remaining) | eur }}.
+              </p>
+            </div>
+          } @else {
+            <p>Nessun budget impostato: tocca una categoria per dargliene uno.</p>
+          }
+        }
+      </app-month-nav>
 
       @if (status(); as status) {
-        <mat-card appearance="outlined">
-          <div class="totals">
-            <span>Budget <strong>{{ status.budget | eur }}</strong></span>
-            <span>Speso <strong>{{ status.spent | eur }}</strong></span>
-            <span>
-              {{ status.remaining < 0 ? 'Sforato di' : 'Rimane' }}
-              <strong [class.expense]="status.remaining < 0">{{ abs(status.remaining) | eur }}</strong>
-            </span>
-          </div>
-        </mat-card>
-
         <mat-card appearance="outlined">
           @for (line of status.lines; track line.categoryId) {
             <button type="button" class="row line" (click)="open(line)">
               <span class="top">
-                <span>{{ line.name }}</span>
+                <span class="name">{{ line.name }}</span>
                 @if (line.budget !== null) {
-                  <span>{{ line.spent | eur }} di {{ line.budget | eur }}</span>
+                  <span class="amount">{{ line.spent | eur }} <span class="muted">di {{ line.budget | eur }}</span></span>
                 } @else {
-                  <span class="muted">{{ line.spent | eur }} · nessun budget</span>
+                  <span class="amount muted">{{ line.spent | eur }}</span>
                 }
               </span>
               @if (line.budget !== null && line.remaining !== null) {
-                <span class="meter" [class.over]="line.remaining < 0">
-                  <span [style.width.%]="percent(line)"></span>
+                <app-meter [class.negative]="line.remaining < 0" [value]="line.spent" [max]="line.budget" [attr.aria-label]="'Spesa di ' + line.name" />
+                <span class="muted small" [class.negative]="line.remaining < 0">
+                  {{ line.remaining < 0 ? 'Sforato di' : 'Restano' }} {{ abs(line.remaining) | eur }}
                 </span>
-                <span class="muted small" [class.expense]="line.remaining < 0">
-                  {{ line.remaining < 0 ? 'Sforato di' : 'Rimangono' }} {{ abs(line.remaining) | eur }}
-                </span>
+              } @else {
+                <span class="muted small">Senza budget</span>
               }
             </button>
           } @empty {
@@ -57,10 +64,33 @@ import { BudgetLine, BudgetService, BudgetStatus } from './budget.service';
     </main>
   `,
   styles: `
+    .summary {
+      display: grid;
+      gap: 0.75rem;
+    }
+
+    p {
+      margin: 0;
+      font-weight: 500;
+    }
+
+    .figures {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 0.25rem 0.75rem;
+      font-weight: 400;
+    }
+
+    .figures strong {
+      font: 600 1.75rem/1.15 var(--om-display);
+    }
+
     .line {
       flex-direction: column;
       align-items: stretch;
-      gap: 0.35rem;
+      gap: 0.4rem;
+      padding-block: 0.875rem;
     }
 
     .line:first-child {
@@ -74,32 +104,26 @@ import { BudgetLine, BudgetService, BudgetStatus } from './budget.service';
       gap: 0 1rem;
     }
 
-    // Barra di avanzamento: stessa tinta per fondo e riempimento, più tenue il fondo.
-    .meter {
+    .name {
+      font-weight: 600;
+    }
+
+    // Nei fogli la barra è in inchiostro; diventa rossa solo quando il budget è sforato.
+    .line app-meter {
       height: 0.5rem;
-      overflow: hidden;
-      background: var(--mat-sys-surface-container-highest);
-      border-radius: 0.25rem;
+      color: var(--om-inchiostro);
     }
 
-    .meter span {
-      display: block;
-      height: 100%;
-      // Blu, non il rosso del tema: il rosso qui vuol dire "sforato".
-      background: light-dark(#2a78d6, #3987e5);
-      border-radius: 0.25rem;
-    }
-
-    .meter.over span {
-      background: var(--mat-sys-error);
+    .line app-meter.negative {
+      color: var(--om-rosso);
     }
 
     .small {
-      font: var(--mat-sys-body-small);
+      font-size: 0.8125rem;
     }
 
     .empty {
-      padding: 1rem;
+      padding: 1.25rem;
     }
   `,
 })
@@ -113,11 +137,6 @@ export class Budget {
 
   constructor() {
     void this.load();
-  }
-
-  /** Quota di budget consumata, fermata al 100 %: lo sforamento lo dice il testo sotto la barra. */
-  protected percent(line: BudgetLine): number {
-    return line.budget ? Math.min(100, (line.spent / line.budget) * 100) : 0;
   }
 
   protected show(period: Period): Promise<void> {

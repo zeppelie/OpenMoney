@@ -11,6 +11,7 @@ import { Icon } from '../layout/icon';
 import { formDialog } from '../shared/dialogs';
 import { EurPipe } from '../shared/money';
 import { MonthNav } from '../shared/month-nav';
+import { MonthSummary } from '../shared/month-summary';
 import { Period, currentPeriod, isoDate, monthLabel } from '../shared/period';
 import { DayList } from './day-list';
 import { MovementDialog, MovementDialogData } from './movement-dialog';
@@ -29,22 +30,13 @@ const weekdays = ['lun', 'mar', 'mer', 'gio', 'ven', 'sab', 'dom'];
 /** I movimenti di un mese in quattro viste: elenco per giorni, calendario, settimane e riepilogo dell'anno. */
 @Component({
   selector: 'app-movements',
-  imports: [DayList, EurPipe, Icon, MatButtonModule, MatCardModule, MatTabsModule, MonthNav, RouterLink],
+  imports: [DayList, EurPipe, Icon, MatButtonModule, MatCardModule, MatTabsModule, MonthNav, MonthSummary, RouterLink],
   template: `
     <main class="page">
-      <div class="header">
-        <app-month-nav [period]="period()" (periodChange)="show($event)" />
-        <span class="spacer"></span>
-        <a matIconButton routerLink="/cerca" aria-label="Cerca tra i movimenti"><app-icon name="search" /></a>
-      </div>
-
-      <mat-card appearance="outlined">
-        <div class="totals">
-          <span>Entrate <strong class="income">{{ ledger().income | eur }}</strong></span>
-          <span>Uscite <strong class="expense">{{ ledger().expense | eur }}</strong></span>
-          <span>Saldo <strong>{{ ledger().income - ledger().expense | eur }}</strong></span>
-        </div>
-      </mat-card>
+      <app-month-nav [period]="period()" (periodChange)="show($event)">
+        <a band-action matIconButton routerLink="/cerca" aria-label="Cerca tra i movimenti"><app-icon name="search" /></a>
+        <app-month-summary [income]="ledger().income" [expense]="ledger().expense" />
+      </app-month-nav>
 
       <mat-tab-group [selectedIndex]="tab()" (selectedIndexChange)="tab.set($event)" dynamicHeight>
         <mat-tab label="Giorni">
@@ -66,13 +58,13 @@ const weekdays = ['lun', 'mar', 'mer', 'gio', 'ven', 'sab', 'dom'];
             }
             @for (cell of calendar(); track $index) {
               @if (cell.day) {
-                <button type="button" class="cell" (click)="open(null, cell.date)">
+                <button type="button" class="cell" [class.today]="cell.date === todayIso" (click)="open(null, cell.date)">
                   <span>{{ cell.day }}</span>
                   @if (cell.income) {
-                    <span class="income">{{ cell.income | eur }}</span>
+                    <span class="income amount">+{{ cell.income | eur }}</span>
                   }
                   @if (cell.expense) {
-                    <span class="expense">{{ cell.expense | eur }}</span>
+                    <span class="amount">−{{ cell.expense | eur }}</span>
                   }
                 </button>
               } @else {
@@ -88,24 +80,22 @@ const weekdays = ['lun', 'mar', 'mer', 'gio', 'ven', 'sab', 'dom'];
               <div class="row">
                 <span>{{ week.label }}</span>
                 <span class="amounts">
-                  <span class="income">{{ week.income | eur }}</span>
-                  <span class="expense">{{ week.expense | eur }}</span>
-                  <span>{{ week.income - week.expense | eur }}</span>
+                  <span class="income">+{{ week.income | eur }}</span>
+                  <span>−{{ week.expense | eur }}</span>
                 </span>
               </div>
             }
           </mat-card>
         </mat-tab>
 
-        <mat-tab [label]="'Anno ' + period().year">
+        <mat-tab label="Anno">
           <mat-card appearance="outlined" class="tab">
             @for (totals of yearTotals(); track totals.month) {
               <button type="button" class="row" (click)="goTo(totals.month)">
                 <span class="month-name">{{ monthLabel(totals.month) }}</span>
                 <span class="amounts">
-                  <span class="income">{{ totals.income | eur }}</span>
-                  <span class="expense">{{ totals.expense | eur }}</span>
-                  <span>{{ totals.income - totals.expense | eur }}</span>
+                  <span class="income">+{{ totals.income | eur }}</span>
+                  <span>−{{ totals.expense | eur }}</span>
                 </span>
               </button>
             }
@@ -122,13 +112,16 @@ const weekdays = ['lun', 'mar', 'mer', 'gio', 'ven', 'sab', 'dom'];
     </main>
   `,
   styles: `
-    .header {
-      display: flex;
-      align-items: center;
-    }
-
     .tab {
       margin-top: 0.75rem;
+    }
+
+    // Sul telefono le quattro viste devono stare tutte in vista, senza frecce per scorrerle.
+    @media (max-width: 599.98px) {
+      mat-tab-group ::ng-deep .mat-mdc-tab {
+        min-width: 0;
+        padding: 0 0.5rem;
+      }
     }
 
     .tab .row:first-child {
@@ -140,6 +133,7 @@ const weekdays = ['lun', 'mar', 'mer', 'gio', 'ven', 'sab', 'dom'];
     }
 
     .amounts {
+      font-variant-numeric: tabular-nums;
       display: flex;
       flex-wrap: wrap;
       justify-content: flex-end;
@@ -161,20 +155,37 @@ const weekdays = ['lun', 'mar', 'mer', 'gio', 'ven', 'sab', 'dom'];
       display: flex;
       flex-direction: column;
       gap: 0.125rem;
-      min-height: 4.5rem;
-      padding: 0.25rem;
+      min-height: 4.75rem;
+      padding: 0.375rem 0.5rem;
       overflow: hidden;
       color: inherit;
-      font: var(--mat-sys-label-small);
+      font-size: 0.75rem;
       text-align: left;
-      background: none;
-      border: 1px solid var(--mat-sys-outline-variant);
-      border-radius: 0.5rem;
+      background: var(--om-carta);
+      border: 0;
+      border-radius: 12px;
       cursor: pointer;
     }
 
+    .cell:hover {
+      background: var(--om-rosa);
+    }
+
     .cell span:first-child {
-      font: var(--mat-sys-label-large);
+      font: 600 1rem/1.2 var(--om-display);
+    }
+
+    // Oggi si riconosce dal bordo rosso, senza riempire la casella.
+    .cell.today {
+      box-shadow: inset 0 0 0 2px var(--om-salvadanaio);
+    }
+
+    @media (max-width: 599.98px) {
+      .cell {
+        min-height: 3.75rem;
+        padding: 0.25rem;
+        font-size: 0.625rem;
+      }
     }
   `,
 })
@@ -187,6 +198,7 @@ export class Movements {
   protected readonly monthLabel = monthLabel;
 
   private readonly today = new Date();
+  protected readonly todayIso = isoDate(this.today.getFullYear(), this.today.getMonth() + 1, this.today.getDate());
   protected readonly period = signal(currentPeriod());
   protected readonly tab = signal(0);
   protected readonly loaded = signal(false);

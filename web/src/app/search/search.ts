@@ -13,12 +13,12 @@ import { DayList } from '../movements/day-list';
 import { MovementDialog, MovementDialogData } from '../movements/movement-dialog';
 import { Movement, MovementKind, MovementsService, SearchCriteria, SearchResult } from '../movements/movements.service';
 import { formDialog } from '../shared/dialogs';
-import { EurPipe } from '../shared/money';
+import { MonthSummary } from '../shared/month-summary';
 
 /** Cerca tra tutti i movimenti per testo, periodo, conto, categoria e tipo; il risultato si può esportare in CSV. */
 @Component({
   selector: 'app-search',
-  imports: [DayList, EurPipe, ReactiveFormsModule, MatButtonModule, MatCardModule, MatFormFieldModule, MatInputModule, MatSelectModule],
+  imports: [DayList, MonthSummary, ReactiveFormsModule, MatButtonModule, MatCardModule, MatFormFieldModule, MatInputModule, MatSelectModule],
   template: `
     <main class="page">
       <h1>Cerca</h1>
@@ -74,11 +74,7 @@ import { EurPipe } from '../shared/money';
 
       @if (result(); as result) {
         <mat-card appearance="outlined">
-          <div class="totals">
-            <span>Entrate <strong class="income">{{ result.ledger.income | eur }}</strong></span>
-            <span>Uscite <strong class="expense">{{ result.ledger.expense | eur }}</strong></span>
-            <span>Saldo <strong>{{ result.ledger.income - result.ledger.expense | eur }}</strong></span>
-          </div>
+          <app-month-summary class="sheet-summary" [income]="result.ledger.income" [expense]="result.ledger.expense" />
         </mat-card>
 
         @if (result.truncated) {
@@ -100,6 +96,10 @@ import { EurPipe } from '../shared/money';
       grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
       gap: 0.75rem;
       padding: 1rem;
+    }
+
+    .sheet-summary {
+      padding: 1.25rem;
     }
 
     .actions {

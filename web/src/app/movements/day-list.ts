@@ -1,88 +1,197 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
-import { MatCardModule } from '@angular/material/card';
 import { Account } from '../accounts/accounts.service';
 import { Category, categoryLabels } from '../categories/categories.service';
 import { Icon } from '../layout/icon';
 import { EurPipe } from '../shared/money';
 import { DayLedger, Movement, movementTitle } from './movements.service';
 
-const dayName = new Intl.DateTimeFormat('it-IT', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+const dayName = new Intl.DateTimeFormat('it-IT', { weekday: 'long', day: 'numeric', month: 'long' });
 
-/** Elenco di movimenti raggruppati per giorno, dal più recente; toccandone uno si chiede di aprirlo. */
+/**
+ * Il registro: movimenti raggruppati per giorno, dal più recente, su un unico foglio come un quaderno dei conti.
+ * Ogni riga porta l'iniziale di chi l'ha inserita; toccandola si chiede di aprirla.
+ */
 @Component({
   selector: 'app-day-list',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [EurPipe, Icon, MatCardModule],
+  imports: [EurPipe, Icon],
   template: `
-    @for (day of days(); track day.date) {
-      <mat-card appearance="outlined">
-        <div class="row head">
-          <span class="date">{{ dayLabel(day) }}</span>
-          <span class="amounts">
-            <span class="income">{{ day.income | eur }}</span>
-            <span class="expense">{{ day.expense | eur }}</span>
-          </span>
-        </div>
-        @for (movement of day.movements; track movement.id) {
-          <button type="button" class="row" (click)="opened.emit(movement)">
-            <span class="what">
-              <span class="title">
-                {{ title(movement) }}
-                @if (movement.attachments.length) {
-                  <app-icon name="attach" class="clip" [attr.title]="movement.attachments.length + ' allegati'" />
+    @if (days().length) {
+      <div class="ledger">
+        @for (day of days(); track day.date) {
+          <section [attr.aria-label]="dayLabel(day)">
+            <header>
+              <span class="date">{{ dayLabel(day) }}</span>
+              <span class="day-totals amount">
+                @if (day.income) {
+                  <span class="income">+{{ day.income | eur }}</span>
+                }
+                @if (day.expense) {
+                  <span>−{{ day.expense | eur }}</span>
                 }
               </span>
-              <span class="muted">{{ details(movement) }}</span>
-            </span>
-            <span [class]="movement.kind.toLowerCase()">{{ movement.amount | eur }}</span>
-          </button>
+            </header>
+            @for (movement of day.movements; track movement.id) {
+              <button type="button" class="entry" (click)="opened.emit(movement)">
+                <span class="who" [attr.title]="movement.author ?? 'Inserito dall\\'app'" aria-hidden="true">
+                  {{ initial(movement) }}
+                </span>
+                <span class="what">
+                  <span class="title">
+                    {{ title(movement) }}
+                    @if (movement.attachments.length) {
+                      <app-icon name="attach" class="clip" />
+                      <span class="sr-only">, con allegati</span>
+                    }
+                  </span>
+                  @if (movement.note) {
+                    <span class="note">{{ movement.note }}</span>
+                  }
+                </span>
+                <span class="how">
+                  <span class="amount sum" [class.income]="movement.kind === 'Income'" [class.transfer]="movement.kind === 'Transfer'">
+                    {{ sign(movement) }}{{ movement.amount | eur }}
+                  </span>
+                  <span class="account">{{ account(movement) }}</span>
+                </span>
+              </button>
+            }
+          </section>
         }
-      </mat-card>
+      </div>
     }
   `,
   styles: `
-    :host {
-      display: grid;
-      gap: 0.75rem;
+    .ledger {
+      overflow: clip;
+      background: var(--om-carta);
+      border-radius: var(--om-radius-sheet);
     }
 
-    // Maiuscola solo all'inizio: in italiano i mesi restano minuscoli.
+    // L'intestazione del giorno resta in vista scorrendo i suoi movimenti.
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 0.875rem 1.25rem 0.375rem;
+      background: var(--om-carta);
+    }
+
+    section + section header {
+      border-top: 1px solid var(--om-filo);
+    }
+
     .date {
-      display: inline-block;
+      font: 600 1.0625rem/1.3 var(--om-display);
     }
 
     .date::first-letter {
       text-transform: uppercase;
     }
 
-    .what {
+    .date {
+      display: inline-block;
+    }
+
+    .day-totals {
       display: flex;
-      flex: 1;
+      gap: 0.875rem;
+      color: var(--om-grafite);
+      font-size: 0.875rem;
+    }
+
+    .entry {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 0.875rem;
+      width: 100%;
+      padding: 0.625rem 1.25rem;
+      color: inherit;
+      font: inherit;
+      text-align: left;
+      background: none;
+      border: 0;
+      cursor: pointer;
+    }
+
+    .entry:hover {
+      background: color-mix(in srgb, var(--om-rosa) 55%, transparent);
+    }
+
+    .who {
+      display: grid;
+      place-items: center;
+      width: 2.25rem;
+      height: 2.25rem;
+      color: var(--om-rosso);
+      font: 600 0.9375rem/1 var(--om-display);
+      background: var(--om-rosa);
+      border-radius: 50%;
+    }
+
+    .what,
+    .how {
+      display: flex;
       flex-direction: column;
       min-width: 0;
+    }
+
+    .how {
+      align-items: flex-end;
     }
 
     .title {
       display: flex;
       align-items: center;
       gap: 0.25rem;
+      font-weight: 600;
     }
 
     .clip {
       width: 1rem;
       height: 1rem;
-      color: var(--mat-sys-on-surface-variant);
+      color: var(--om-grafite);
     }
 
-    .what .muted {
-      font: var(--mat-sys-body-small);
+    .note,
+    .account {
+      overflow: hidden;
+      color: var(--om-grafite);
+      font-size: 0.875rem;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
-    .amounts {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: flex-end;
-      gap: 0 1rem;
+    .sum {
+      font-weight: 600;
+    }
+
+    .transfer {
+      color: var(--om-grafite);
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+    }
+
+    @media (max-width: 599.98px) {
+      header,
+      .entry {
+        padding-inline: 1rem;
+      }
+
+      .entry {
+        gap: 0.75rem;
+      }
     }
   `,
 })
@@ -103,9 +212,17 @@ export class DayList {
     return movementTitle(movement, this.accountNames(), this.categoryNames());
   }
 
-  /** Seconda riga: nota, conto e chi l'ha inserito. */
-  protected details(movement: Movement): string {
-    const account = movement.kind === 'Transfer' ? 'Trasferimento' : this.accountNames().get(movement.accountId);
-    return [movement.note, account, movement.author].filter(Boolean).join(' · ');
+  /** Le uscite con il meno, le entrate con il più; un trasferimento non cambia il totale della famiglia. */
+  protected sign(movement: Movement): string {
+    return movement.kind === 'Expense' ? '−' : movement.kind === 'Income' ? '+' : '';
+  }
+
+  /** Iniziale di chi l'ha inserito; € per i movimenti creati dall'app (gli addebiti delle carte). */
+  protected initial(movement: Movement): string {
+    return movement.author?.charAt(0).toUpperCase() ?? '€';
+  }
+
+  protected account(movement: Movement): string {
+    return movement.kind === 'Transfer' ? 'Trasferimento' : (this.accountNames().get(movement.accountId) ?? '');
   }
 }

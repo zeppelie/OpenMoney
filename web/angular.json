@@ -52,6 +52,8 @@
               }
             ],
             "styles": [
+              "@fontsource-variable/instrument-sans/wght.css",
+              "@fontsource-variable/bricolage-grotesque/wght.css",
               "src/styles.scss"
             ]
           },

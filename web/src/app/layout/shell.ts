@@ -1,6 +1,5 @@
 import { Component, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { MatToolbarModule } from '@angular/material/toolbar';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../auth/auth.service';
 import { Icon, IconName } from './icon';
@@ -20,43 +19,50 @@ const phoneItems: NavItem[] = [
   { path: '/profilo', icon: 'person', label: 'Profilo' },
 ];
 
-// Sul desktop c'è posto per tutte le sezioni; il profilo sta a destra, con il nome dell'utente.
-const sections = [
+// Sul desktop la colonna a sinistra ha posto per tutte le sezioni; il profilo sta in fondo, con il nome dell'utente.
+const sections: NavItem[] = [
   ...phoneItems.filter((item) => item.path !== '/profilo'),
-  { path: '/categorie', label: 'Categorie' },
-  { path: '/ricorrenze', label: 'Ricorrenze' },
+  { path: '/categorie', icon: 'label', label: 'Categorie' },
+  { path: '/ricorrenze', icon: 'repeat', label: 'Ricorrenze' },
 ];
 
 /**
- * Cornice delle pagine riservate. Su schermo largo: barra in alto con tutte le voci.
- * Sul telefono: barra sottile in alto e voci con icona in una barra fissa in basso, come nelle app;
- * "Esci" si trova nel Profilo.
+ * Cornice delle pagine riservate. Su schermo largo: colonna di navigazione a sinistra, chiara, perché il rosso
+ * resta alla fascia del mese. Sul telefono: barra fissa in basso, come nelle app; "Esci" si trova nel Profilo.
  */
 @Component({
   selector: 'app-shell',
-  imports: [Icon, MatButtonModule, MatToolbarModule, RouterLink, RouterLinkActive, RouterOutlet],
+  imports: [Icon, MatButtonModule, RouterLink, RouterLinkActive, RouterOutlet],
   template: `
-    <mat-toolbar class="bar">
+    <aside class="rail">
       <a class="brand" routerLink="/">
-        <img src="icons/icon-192x192.png" alt="" width="32" height="32" />
-        OpenMoney
+        <img src="icons/icon-192x192.png" alt="" width="40" height="40" />
+        <span>OpenMoney</span>
       </a>
-      <span class="desktop-only links">
+      <nav aria-label="Sezioni dell'app">
         @for (item of sections; track item.path) {
-          <a matButton [routerLink]="item.path">{{ item.label }}</a>
+          <a
+            [routerLink]="item.path"
+            routerLinkActive="active"
+            [routerLinkActiveOptions]="{ exact: item.path === '/' }"
+            ariaCurrentWhenActive="page"
+          >
+            <app-icon [name]="item.icon" />
+            {{ item.label }}
+          </a>
         }
-      </span>
+      </nav>
       <span class="spacer"></span>
-      <span class="desktop-only links">
-        <a matButton routerLink="/profilo">
-          <app-icon name="person" />
-          {{ auth.user()?.displayName || auth.user()?.email }}
-        </a>
-        <button matButton type="button" (click)="logout()">Esci</button>
-      </span>
-    </mat-toolbar>
+      <a class="me" routerLink="/profilo" routerLinkActive="active" ariaCurrentWhenActive="page">
+        <span class="initial" aria-hidden="true">{{ initial() }}</span>
+        <span class="name">{{ auth.user()?.displayName || auth.user()?.email }}</span>
+      </a>
+      <button matButton type="button" (click)="logout()">Esci</button>
+    </aside>
 
-    <router-outlet />
+    <div class="content">
+      <router-outlet />
+    </div>
 
     <nav class="bottom-nav" aria-label="Sezioni dell'app">
       @for (item of phoneItems; track item.path) {
@@ -73,20 +79,92 @@ const sections = [
     </nav>
   `,
   styles: `
-    .bar {
-      gap: 0.5rem;
+    $rail: 15rem;
+
+    .rail {
+      position: fixed;
+      inset: 0 auto 0 0;
+      z-index: 5;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      width: $rail;
+      padding: 1.25rem 0.875rem;
+      background: var(--om-carta);
+      border-right: 1px solid var(--om-filo);
     }
 
-    .links,
+    .content {
+      margin-left: $rail;
+    }
+
     .brand {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: 0.625rem;
+      margin: 0 0.375rem 1.5rem;
+      color: var(--om-inchiostro);
+      font: 650 1.25rem/1 var(--om-display);
+      letter-spacing: -0.01em;
+      text-decoration: none;
     }
 
-    .brand {
-      color: inherit;
+    nav {
+      display: grid;
+      gap: 0.125rem;
+    }
+
+    .rail nav a,
+    .me {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      min-height: 2.75rem;
+      padding: 0 0.75rem;
+      color: var(--om-grafite);
+      font-weight: 500;
       text-decoration: none;
+      border-radius: 12px;
+    }
+
+    .rail nav a:hover,
+    .me:hover {
+      color: var(--om-inchiostro);
+      background: color-mix(in srgb, var(--om-rosa) 55%, transparent);
+    }
+
+    .rail .active {
+      color: var(--om-rosso);
+      font-weight: 600;
+      background: var(--om-rosa);
+    }
+
+    .me {
+      margin-bottom: 0.25rem;
+    }
+
+    .name {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    // L'iniziale dell'utente, la stessa che marca i suoi movimenti nel registro.
+    .initial {
+      display: grid;
+      flex: none;
+      place-items: center;
+      width: 1.75rem;
+      height: 1.75rem;
+      color: var(--om-rosso);
+      font: 600 0.875rem/1 var(--om-display);
+      background: var(--om-rosa);
+      border-radius: 50%;
+    }
+
+    .rail > button {
+      align-self: flex-start;
     }
 
     // Barra in basso del telefono, sul modello della "navigation bar" di Material 3.
@@ -97,11 +175,11 @@ const sections = [
       left: 0;
       z-index: 5;
       display: none;
-      grid-auto-flow: column;
       grid-auto-columns: 1fr;
+      grid-auto-flow: column;
       padding: 0.5rem 0 calc(0.5rem + env(safe-area-inset-bottom));
-      background: var(--mat-sys-surface-container);
-      box-shadow: 0 -1px 0 var(--mat-sys-outline-variant);
+      background: var(--om-carta);
+      border-top: 1px solid var(--om-filo);
     }
 
     .bottom-nav a {
@@ -109,8 +187,9 @@ const sections = [
       flex-direction: column;
       align-items: center;
       gap: 0.25rem;
-      color: var(--mat-sys-on-surface-variant);
-      font: var(--mat-sys-label-medium);
+      color: var(--om-grafite);
+      font-size: 0.75rem;
+      font-weight: 500;
       text-decoration: none;
       -webkit-tap-highlight-color: transparent;
     }
@@ -123,19 +202,22 @@ const sections = [
       border-radius: 1rem;
     }
 
-    .active {
-      color: var(--mat-sys-on-surface);
+    .bottom-nav .active {
+      color: var(--om-rosso);
       font-weight: 600;
     }
 
-    .active .pill {
-      color: var(--mat-sys-on-secondary-container);
-      background: var(--mat-sys-secondary-container);
+    .bottom-nav .active .pill {
+      background: var(--om-rosa);
     }
 
     @media (max-width: 599.98px) {
-      .bar {
-        min-height: 3.5rem;
+      .rail {
+        display: none;
+      }
+
+      .content {
+        margin-left: 0;
       }
 
       .bottom-nav {
@@ -149,6 +231,11 @@ export class Shell {
   private readonly router = inject(Router);
   protected readonly phoneItems = phoneItems;
   protected readonly sections = sections;
+
+  protected initial(): string {
+    const user = this.auth.user();
+    return (user?.displayName || user?.email || '?').charAt(0).toUpperCase();
+  }
 
   protected async logout(): Promise<void> {
     await this.auth.logout();

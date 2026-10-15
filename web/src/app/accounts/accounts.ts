@@ -20,8 +20,8 @@ import { Account, AccountsOverview, AccountsService, accountGroups } from './acc
         <mat-card appearance="outlined">
           <div class="totals">
             <span>Attività <strong class="income">{{ overview.netWorth.assets | eur }}</strong></span>
-            <span>Passività <strong class="expense">{{ overview.netWorth.liabilities | eur }}</strong></span>
-            <span>Totale <strong>{{ overview.netWorth.total | eur }}</strong></span>
+            <span>Passività <strong>{{ overview.netWorth.liabilities | eur }}</strong></span>
+            <span>Totale <strong [class.negative]="overview.netWorth.total < 0">{{ overview.netWorth.total | eur }}</strong></span>
           </div>
         </mat-card>
 
@@ -34,7 +34,7 @@ import { Account, AccountsOverview, AccountsService, accountGroups } from './acc
             @for (account of group.accounts; track account.id) {
               <button type="button" class="row" (click)="open(account)">
                 <span>{{ account.name }}</span>
-                <span [class.expense]="account.balance < 0">{{ account.balance | eur }}</span>
+                <span class="amount" [class.negative]="account.balance < 0">{{ account.balance | eur }}</span>
               </button>
             }
           </mat-card>

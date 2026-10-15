@@ -58,7 +58,12 @@ const barWidth = 10;
   imports: [EurPipe, MatButtonToggleModule, MatCardModule, MonthNav],
   template: `
     <main class="page">
-      <app-month-nav [period]="period()" (periodChange)="show($event)" />
+      <app-month-nav [period]="period()" (periodChange)="show($event)">
+        <p class="band-total">
+          {{ kind() === 'Expense' ? 'Uscite del mese' : 'Entrate del mese' }}
+          <strong class="amount">{{ breakdown().total | eur }}</strong>
+        </p>
+      </app-month-nav>
 
       <mat-button-toggle-group
         [value]="kind()"
@@ -235,14 +240,27 @@ const barWidth = 10;
       max-height: 16rem;
     }
 
+    // Gli stessi colori del registro: entrate in verderame, uscite in inchiostro.
     .income-bar {
-      fill: var(--series-1);
-      background: var(--series-1);
+      fill: var(--om-verderame);
+      background: var(--om-verderame);
     }
 
     .expense-bar {
-      fill: var(--series-8);
-      background: var(--series-8);
+      fill: var(--om-inchiostro);
+      background: var(--om-inchiostro);
+    }
+
+    .band-total {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      margin: 0;
+      font-size: 0.875rem;
+    }
+
+    .band-total strong {
+      font: 600 1.75rem/1.15 var(--om-display);
     }
 
     .baseline {
