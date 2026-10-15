@@ -18,6 +18,19 @@ export const routes: Routes = [
         path: 'ricorrenze',
         loadComponent: () => import('./recurrences/recurrences').then((m) => m.Recurrences),
       },
+      { path: 'patrimonio', loadComponent: () => import('./patrimonio/patrimonio').then((m) => m.Patrimonio) },
+      {
+        path: 'patrimonio/rilevazione',
+        loadComponent: () => import('./patrimonio/snapshot-editor').then((m) => m.SnapshotEditor),
+      },
+      {
+        path: 'patrimonio/rilevazione/:id',
+        loadComponent: () => import('./patrimonio/snapshot-editor').then((m) => m.SnapshotEditor),
+      },
+      {
+        path: 'patrimonio/posizioni',
+        loadComponent: () => import('./patrimonio/holdings').then((m) => m.Holdings),
+      },
       { path: 'profilo', loadComponent: () => import('./profile/profile').then((m) => m.Profile) },
     ],
   },

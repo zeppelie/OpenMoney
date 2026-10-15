@@ -10,6 +10,8 @@ import { Period, monthLabel, shiftPeriod } from './period';
 @Component({
   selector: 'app-month-nav',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  // L'aspetto della fascia sta negli stili globali (.band): lo usa anche la pagina del patrimonio.
+  host: { class: 'band' },
   imports: [Icon, MatButtonModule],
   template: `
     <div class="nav">
@@ -29,26 +31,11 @@ import { Period, monthLabel, shiftPeriod } from './period';
     <ng-content />
   `,
   styles: `
-    :host {
-      display: grid;
-      gap: 1.25rem;
-      padding: 1rem 1.25rem 1.5rem;
-      color: var(--om-on-salvadanaio);
-      background: var(--om-salvadanaio);
-      border-radius: 28px;
-    }
-
     .nav {
       display: flex;
       align-items: center;
       gap: 0.25rem;
       margin-left: -0.5rem;
-    }
-
-    // I pulsanti di Material prendono il colore del testo della fascia, non il rosso del tema.
-    .nav ::ng-deep .mat-mdc-icon-button {
-      --mat-icon-button-icon-color: currentColor;
-      color: inherit;
     }
 
     h1 {
@@ -71,14 +58,7 @@ import { Period, monthLabel, shiftPeriod } from './period';
       opacity: 0.72;
     }
 
-    // Sul telefono la fascia arriva ai bordi dello schermo e si chiude in basso.
     @media (max-width: 599.98px) {
-      :host {
-        margin: -1rem -0.75rem 0;
-        padding: calc(0.75rem + env(safe-area-inset-top)) 1rem 1.25rem;
-        border-radius: 0 0 28px 28px;
-      }
-
       h1 {
         min-width: 0;
       }

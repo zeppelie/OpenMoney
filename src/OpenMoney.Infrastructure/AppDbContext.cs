@@ -5,6 +5,7 @@ using OpenMoney.Core.Categorie;
 using OpenMoney.Core.Conti;
 using OpenMoney.Core.Modelli;
 using OpenMoney.Core.Movimenti;
+using OpenMoney.Core.Patrimonio;
 using OpenMoney.Core.Ricorrenze;
 
 namespace OpenMoney.Infrastructure;
@@ -19,6 +20,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<Recurrence> Recurrences => Set<Recurrence>();
     public DbSet<MovementTemplate> Templates => Set<MovementTemplate>();
     public DbSet<Attachment> Attachments => Set<Attachment>();
+    public DbSet<Portfolio> Portfolios => Set<Portfolio>();
+    public DbSet<Holding> Holdings => Set<Holding>();
+    public DbSet<Snapshot> Snapshots => Set<Snapshot>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

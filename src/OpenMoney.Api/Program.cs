@@ -8,6 +8,7 @@ using OpenMoney.Api.Categorie;
 using OpenMoney.Api.Conti;
 using OpenMoney.Api.Modelli;
 using OpenMoney.Api.Movimenti;
+using OpenMoney.Api.Patrimonio;
 using OpenMoney.Api.Ricorrenze;
 using OpenMoney.Api.Statistiche;
 using OpenMoney.Core.Categorie;
@@ -18,7 +19,8 @@ using Scalar.AspNetCore;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<AppDbContext>(o =>
-    o.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
+    // Query separate per le collezioni di una rilevazione (posizioni e conti): una sola query le moltiplicherebbe tra loro.
+    o.UseNpgsql(builder.Configuration.GetConnectionString("Default"), npgsql => npgsql.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery)));
 
 builder.Services.AddAuthorizationBuilder()
     .AddPolicy(UserEndpoints.AdminPolicy, policy => policy.RequireClaim(UserEndpoints.AdminClaim));
@@ -101,6 +103,7 @@ app.MapTemplates();
 app.MapStats();
 app.MapBudgets();
 app.MapRecurrences();
+app.MapPatrimonio();
 
 // Documentazione interattiva (Scalar su /scalar): sempre in sviluppo, altrove solo su richiesta esplicita.
 if (app.Environment.IsDevelopment() || app.Configuration.GetValue<bool>("ApiDocs"))

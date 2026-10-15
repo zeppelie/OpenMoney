@@ -1,6 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
+import { RouterLink } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { firstValueFrom } from 'rxjs';
 import { Icon } from '../layout/icon';
@@ -11,10 +12,13 @@ import { Account, AccountsOverview, AccountsService, accountGroups } from './acc
 
 @Component({
   selector: 'app-accounts',
-  imports: [EurPipe, Icon, MatButtonModule, MatCardModule],
+  imports: [EurPipe, Icon, MatButtonModule, MatCardModule, RouterLink],
   template: `
     <main class="page">
-      <h1>Conti</h1>
+      <div class="title">
+        <h1>Conti</h1>
+        <a matButton="outlined" routerLink="/patrimonio">Patrimonio e investimenti</a>
+      </div>
 
       @if (overview(); as overview) {
         <mat-card appearance="outlined">
@@ -48,6 +52,14 @@ import { Account, AccountsOverview, AccountsService, accountGroups } from './acc
         Conto
       </button>
     </main>
+  `,
+  styles: `.title {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+    }
   `,
 })
 export class Accounts {

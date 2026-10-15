@@ -10,7 +10,7 @@ interface NavItem {
   label: string;
 }
 
-// Sul telefono la barra in basso tiene cinque voci: categorie e ricorrenze si raggiungono dal Profilo.
+// Sul telefono la barra in basso tiene cinque voci: il patrimonio si apre dai Conti, categorie e ricorrenze dal Profilo.
 const phoneItems: NavItem[] = [
   { path: '/', icon: 'list', label: 'Movimenti' },
   { path: '/statistiche', icon: 'pie', label: 'Statistiche' },
@@ -22,6 +22,7 @@ const phoneItems: NavItem[] = [
 // Sul desktop la colonna a sinistra ha posto per tutte le sezioni; il profilo sta in fondo, con il nome dell'utente.
 const sections: NavItem[] = [
   ...phoneItems.filter((item) => item.path !== '/profilo'),
+  { path: '/patrimonio', icon: 'bank', label: 'Patrimonio' },
   { path: '/categorie', icon: 'label', label: 'Categorie' },
   { path: '/ricorrenze', icon: 'repeat', label: 'Ricorrenze' },
 ];

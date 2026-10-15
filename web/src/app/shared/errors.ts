@@ -40,6 +40,14 @@ const messages: Record<string, string> = {
   UnsupportedFileType: 'Si possono allegare solo foto (JPEG, PNG, WebP, HEIC) e PDF.',
   EmptyFile: 'Il file è vuoto.',
   FileTooLarge: 'Il file è troppo grande (massimo 10 MB).',
+  DuplicateName: 'Esiste già un gestore con questo nome.',
+  PortfolioInUse: 'Il gestore ha delle posizioni: spostale o eliminale prima.',
+  HoldingInUse: 'La posizione compare in una rilevazione: invece di eliminarla, segnala come chiusa.',
+  MissingPortfolio: 'Scegli il gestore dell\'investimento.',
+  InvalidHoldingKind: 'Scegli il tipo della posizione.',
+  DuplicateHolding: 'La stessa posizione compare due volte.',
+  UnknownHolding: 'Una posizione non esiste più.',
+  SnapshotDateTaken: 'Esiste già una rilevazione in questa data.',
   CategoryKindLocked: 'Il tipo di una categoria esistente non si può cambiare.',
 };
 

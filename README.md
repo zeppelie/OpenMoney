@@ -18,6 +18,7 @@ Alternativa self-hosted a Money Manager: entrate, uscite, conti e budget della f
 - Ricerca (la lente nella pagina dei movimenti): per testo della nota, periodo, conto, categoria e tipo. Il risultato si esporta in CSV, nel formato che Excel in italiano apre direttamente.
 - Modelli: nel modulo di un movimento "Salva come modello" ricorda tipo, conto, categoria, nota e (se c'è) importo; "Da un modello" li ricompila. Si eliminano dal Profilo.
 - Scontrini: a ogni movimento si allegano foto (JPEG, PNG, WebP, HEIC) o PDF fino a 10 MB; sul telefono "Allega scontrino" propone anche la fotocamera. I file stanno nel volume Docker `attachments`, fuori dal database.
+- Patrimonio (dalla pagina Conti, o nella colonna a sinistra su desktop): una rilevazione al mese fotografa il valore degli investimenti, divisi per gestore (Intesa, Azimut, Gestito da me…), e il saldo dei conti. Gestito più conti fa il totale; previdenza e mutuo residuo stanno a parte e il netto li comprende. La nuova rilevazione parte dai valori della volta prima e dai saldi calcolati da OpenMoney, correggibili. Se nel mese non c'è ancora una rilevazione, la pagina lo ricorda.
 - Conti, categorie e movimenti sono condivisi da tutta la famiglia; ogni movimento ricorda chi l'ha inserito.
 
 - Al primo avvio chi apre l'app crea l'account dell'amministratore; poi gli altri utenti li aggiunge lui da **Profilo → Utenti**. Non c'è registrazione libera.
@@ -62,6 +63,29 @@ Se Caddy gira in un container, `127.0.0.1` è il container stesso: collega il se
 Apri l'indirizzo HTTPS e crea subito l'account dell'amministratore: finché non esiste, chiunque raggiunga il sito può crearlo. Verifica nel browser che il cookie `.AspNetCore.Identity.Application` sia marcato `Secure`.
 
 **Aggiornare:** `git pull && docker compose -f docker-compose.prod.yml up -d --build --wait`.
+
+## Importare uno storico del patrimonio
+
+**Patrimonio → Gestori e posizioni → Importa uno storico** (solo l'amministratore) accetta un file JSON come questo; gestori e posizioni mancanti vengono creati, le date già presenti si saltano:
+
+```json
+{
+  "snapshots": [
+    {
+      "date": "2025-03-30",
+      "holdings": [
+        { "name": "Alpha Bonds", "kind": "Investment", "portfolio": "Intesa", "invested": 10000, "value": 9978.77 },
+        { "name": "Fondo integrativo", "kind": "Pension", "portfolio": null, "invested": null, "value": 20925.55 },
+        { "name": "Mutuo", "kind": "Debt", "portfolio": null, "invested": null, "value": 142901.36 }
+      ],
+      "accounts": [{ "name": "Satispay", "balance": 2064.21 }],
+      "note": null
+    }
+  ]
+}
+```
+
+`kind` è `Investment`, `Pension` o `Debt`; `invested` può mancare (`null`). Un conto con lo stesso nome di un conto di OpenMoney viene collegato a quel conto. Le posizioni nuove assenti dall'ultima rilevazione del file vengono segnate come chiuse.
 
 ## Da Visual Studio
 

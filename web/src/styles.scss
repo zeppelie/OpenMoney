@@ -199,6 +199,41 @@ button.row:hover {
   }
 }
 
+// La fascia rossa in cima alle pagine di riepilogo (mese, patrimonio): l'unico grande campo di rosso dell'app.
+.band {
+  display: grid;
+  gap: 1.25rem;
+  padding: 1rem 1.25rem 1.5rem;
+  color: var(--om-on-salvadanaio);
+  background: var(--om-salvadanaio);
+  border-radius: 28px;
+
+  // I pulsanti di Material prendono il colore del testo della fascia, non il rosso del tema.
+  .mat-mdc-icon-button,
+  .mat-mdc-button {
+    --mat-icon-button-icon-color: currentColor;
+    --mat-button-text-label-text-color: currentColor;
+    color: inherit;
+  }
+
+  p {
+    margin: 0;
+  }
+}
+
+// Cifra grande in una fascia, con la sua etichetta.
+.band-figure {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.75rem;
+
+  strong {
+    font: 600 1.75rem/1.15 $display;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
 // Campi di un modulo in una finestra di dialogo. Il primo selettore serve a vincere sugli stili di Material.
 .mat-mdc-dialog-container .fields {
   display: flex;
@@ -269,6 +304,17 @@ $phone: 599.98px;
 
   h1 {
     font-size: 1.625rem;
+  }
+
+  // Sul telefono la fascia arriva ai bordi dello schermo e si chiude in basso.
+  .band {
+    margin: -1rem -0.75rem 0;
+    padding: calc(0.75rem + env(safe-area-inset-top)) 1rem 1.25rem;
+    border-radius: 0 0 28px 28px;
+  }
+
+  .band-figure strong {
+    font-size: 1.5rem;
   }
 
   .page {

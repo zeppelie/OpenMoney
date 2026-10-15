@@ -353,6 +353,72 @@ namespace OpenMoney.Infrastructure.Migrations
                     b.ToTable("Movements", (string)null);
                 });
 
+            modelBuilder.Entity("OpenMoney.Core.Patrimonio.Holding", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("Closed")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<Guid?>("PortfolioId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PortfolioId");
+
+                    b.ToTable("Holdings", (string)null);
+                });
+
+            modelBuilder.Entity("OpenMoney.Core.Patrimonio.Portfolio", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("Portfolios", (string)null);
+                });
+
+            modelBuilder.Entity("OpenMoney.Core.Patrimonio.Snapshot", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Date")
+                        .IsUnique();
+
+                    b.ToTable("Snapshots", (string)null);
+                });
+
             modelBuilder.Entity("OpenMoney.Core.Ricorrenze.Recurrence", b =>
                 {
                     b.Property<Guid>("Id")
@@ -607,6 +673,90 @@ namespace OpenMoney.Infrastructure.Migrations
                         .WithMany()
                         .HasForeignKey("ToAccountId")
                         .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("OpenMoney.Core.Patrimonio.Holding", b =>
+                {
+                    b.HasOne("OpenMoney.Core.Patrimonio.Portfolio", null)
+                        .WithMany()
+                        .HasForeignKey("PortfolioId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("OpenMoney.Core.Patrimonio.Snapshot", b =>
+                {
+                    b.OwnsMany("OpenMoney.Core.Patrimonio.SnapshotAccount", "Accounts", b1 =>
+                        {
+                            b1.Property<Guid>("SnapshotId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<int>("Id")
+                                .ValueGeneratedOnAdd()
+                                .HasColumnType("integer");
+
+                            NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b1.Property<int>("Id"));
+
+                            b1.Property<Guid?>("AccountId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<decimal>("Balance")
+                                .HasPrecision(14, 2)
+                                .HasColumnType("numeric(14,2)");
+
+                            b1.Property<string>("Name")
+                                .IsRequired()
+                                .HasMaxLength(60)
+                                .HasColumnType("character varying(60)");
+
+                            b1.HasKey("SnapshotId", "Id");
+
+                            b1.ToTable("SnapshotAccounts", (string)null);
+
+                            b1.WithOwner()
+                                .HasForeignKey("SnapshotId");
+                        });
+
+                    b.OwnsMany("OpenMoney.Core.Patrimonio.SnapshotHolding", "Holdings", b1 =>
+                        {
+                            b1.Property<Guid>("SnapshotId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<int>("Id")
+                                .ValueGeneratedOnAdd()
+                                .HasColumnType("integer");
+
+                            NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b1.Property<int>("Id"));
+
+                            b1.Property<Guid>("HoldingId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<decimal?>("Invested")
+                                .HasPrecision(14, 2)
+                                .HasColumnType("numeric(14,2)");
+
+                            b1.Property<decimal>("Value")
+                                .HasPrecision(14, 2)
+                                .HasColumnType("numeric(14,2)");
+
+                            b1.HasKey("SnapshotId", "Id");
+
+                            b1.HasIndex("HoldingId");
+
+                            b1.ToTable("SnapshotHoldings", (string)null);
+
+                            b1.HasOne("OpenMoney.Core.Patrimonio.Holding", null)
+                                .WithMany()
+                                .HasForeignKey("HoldingId")
+                                .OnDelete(DeleteBehavior.Restrict)
+                                .IsRequired();
+
+                            b1.WithOwner()
+                                .HasForeignKey("SnapshotId");
+                        });
+
+                    b.Navigation("Accounts");
+
+                    b.Navigation("Holdings");
                 });
 
             modelBuilder.Entity("OpenMoney.Core.Ricorrenze.Recurrence", b =>
