@@ -7,3 +7,6 @@ web/.angular/
 .idea/
 .env
 src/OpenMoney.Api/attachments/
+
+# File personali (estratti conto, backup, fogli del patrimonio): mai nel repository.
+esempi/
