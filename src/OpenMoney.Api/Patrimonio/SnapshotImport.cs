@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using OpenMoney.Core.Conti;
 using OpenMoney.Core.Patrimonio;
 using OpenMoney.Infrastructure;
 
@@ -20,9 +21,10 @@ public static class SnapshotImport
 
     public sealed record ImportAccount(string Name, decimal Balance);
 
-    public sealed record ImportResult(int Imported, int Skipped);
+    /// <param name="CreatedAccounts">Conti di OpenMoney creati da quelli delle rilevazioni.</param>
+    public sealed record ImportResult(int Imported, int Skipped, int CreatedAccounts);
 
-    public static async Task<IResult> ImportAsync(ImportFile file, AppDbContext db, CancellationToken ct)
+    public static async Task<IResult> ImportAsync(ImportFile file, AppDbContext db, TimeProvider time, CancellationToken ct)
     {
         var existingDates = (await db.Snapshots.Select(s => s.Date).ToListAsync(ct)).ToHashSet();
         var portfolios = (await db.Portfolios.ToListAsync(ct)).ToDictionary(p => p.Name, StringComparer.OrdinalIgnoreCase);
@@ -70,7 +72,42 @@ public static class SnapshotImport
             holding.Update(new HoldingValues(holding.Name, holding.Kind, holding.PortfolioId, Closed: true));
 
         await db.SaveChangesAsync(ct);
-        return Results.Ok(new ImportResult(toImport.Count, file.Snapshots.Count - toImport.Count));
+        var createdAccounts = await CreateAccountsAsync(db, time.Today(), ct);
+        return Results.Ok(new ImportResult(toImport.Count, file.Snapshots.Count - toImport.Count, createdAccounts));
+    }
+
+    /// <summary>
+    /// I conti delle rilevazioni diventano conti di OpenMoney, così compaiono in Conti e nelle prossime rilevazioni il
+    /// saldo si calcola dai movimenti. Un conto con lo stesso nome già esistente viene solo collegato; uno nuovo parte
+    /// (gruppo Conti bancari) dal saldo dell'ultima rilevazione. Guarda tutte le rilevazioni, anche quelle importate in
+    /// passato: reimportare lo stesso file sistema anche uno storico caricato prima di questa regola.
+    /// </summary>
+    private static async Task<int> CreateAccountsAsync(AppDbContext db, DateOnly today, CancellationToken ct)
+    {
+        var snapshots = await db.Snapshots.ToListAsync(ct);
+        var existing = (await db.Accounts.ToListAsync(ct)).GroupBy(a => a.Name.Trim(), StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.First().Id, StringComparer.OrdinalIgnoreCase);
+        var created = 0;
+
+        foreach (var (name, balance) in Snapshot.LatestUnlinkedBalances(snapshots))
+        {
+            if (!existing.TryGetValue(name, out var accountId))
+            {
+                var values = new AccountValues(name, AccountGroup.Bank, balance).Normalized();
+                if (values.Validate().Count > 0)
+                    continue;
+                var account = new Account(values, today);
+                db.Accounts.Add(account);
+                accountId = account.Id;
+                created++;
+            }
+
+            foreach (var snapshot in snapshots)
+                snapshot.LinkAccount(name, accountId);
+        }
+
+        await db.SaveChangesAsync(ct);
+        return created;
     }
 
     private static Portfolio? PortfolioFor(string? name, Dictionary<string, Portfolio> portfolios, AppDbContext db)

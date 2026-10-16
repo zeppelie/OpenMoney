@@ -94,4 +94,23 @@ public sealed class Snapshot
         Holdings = [.. values.Holdings];
         Accounts = [.. values.Accounts];
     }
+
+    /// <summary>Collega a un conto di OpenMoney le righe tenute solo qui con quel nome (senza badare alle maiuscole).</summary>
+    public void LinkAccount(string name, Guid accountId) =>
+        Accounts = [.. Accounts.Select(a => a.AccountId is null && SameName(a.Name, name) ? a with { AccountId = accountId } : a)];
+
+    /// <summary>
+    /// I conti tenuti solo nelle rilevazioni, ciascuno con il saldo dell'ultima rilevazione in cui compare: è il saldo
+    /// da cui partire quando diventano conti di OpenMoney.
+    /// </summary>
+    public static IReadOnlyDictionary<string, decimal> LatestUnlinkedBalances(IEnumerable<Snapshot> snapshots)
+    {
+        var latest = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase);
+        foreach (var snapshot in snapshots.OrderBy(s => s.Date))
+            foreach (var account in snapshot.Accounts.Where(a => a.AccountId is null))
+                latest[account.Name.Trim()] = account.Balance;
+        return latest;
+    }
+
+    private static bool SameName(string a, string b) => string.Equals(a.Trim(), b.Trim(), StringComparison.OrdinalIgnoreCase);
 }

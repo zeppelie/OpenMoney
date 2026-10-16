@@ -91,6 +91,12 @@ export interface SnapshotSummary {
   netWorth: number;
 }
 
+export interface ImportResult {
+  imported: number;
+  skipped: number;
+  createdAccounts: number;
+}
+
 export type SnapshotTotals = Pick<
   SnapshotSummary,
   'id' | 'date' | 'managed' | 'liquidity' | 'total' | 'pensionTotal' | 'debtTotal' | 'netWorth'
@@ -157,8 +163,11 @@ export class PatrimonioService {
     return firstValueFrom(this.http.delete(`/api/snapshots/${id}`));
   }
 
-  /** Importa uno storico in JSON (vedi README); restituisce quante rilevazioni ha aggiunto e quante ha saltato. */
-  import(content: unknown): Promise<{ imported: number; skipped: number }> {
-    return firstValueFrom(this.http.post<{ imported: number; skipped: number }>('/api/snapshots/import', content));
+  /**
+   * Importa uno storico in JSON (vedi README): restituisce quante rilevazioni ha aggiunto, quante ha saltato perché
+   * già presenti e quanti conti di OpenMoney ha creato da quelli delle rilevazioni.
+   */
+  import(content: unknown): Promise<ImportResult> {
+    return firstValueFrom(this.http.post<ImportResult>('/api/snapshots/import', content));
   }
 }

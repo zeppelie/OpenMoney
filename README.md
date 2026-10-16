@@ -85,7 +85,7 @@ Apri l'indirizzo HTTPS e crea subito l'account dell'amministratore: finché non 
 }
 ```
 
-`kind` è `Investment`, `Pension` o `Debt`; `invested` può mancare (`null`). Un conto con lo stesso nome di un conto di OpenMoney viene collegato a quel conto. Le posizioni nuove assenti dall'ultima rilevazione del file vengono segnate come chiuse.
+`kind` è `Investment`, `Pension` o `Debt`; `invested` può mancare (`null`). Un conto con lo stesso nome di un conto di OpenMoney viene collegato a quel conto; gli altri diventano conti di OpenMoney (gruppo Conti bancari, da cambiare se serve) con saldo iniziale pari al saldo dell'ultima rilevazione in cui compaiono. Questo vale per tutte le rilevazioni già presenti: reimportare un file già importato crea e collega anche i conti di uno storico caricato con una versione precedente. Le posizioni nuove assenti dall'ultima rilevazione del file vengono segnate come chiuse.
 
 ## Da Visual Studio
 

@@ -107,8 +107,9 @@ import { Holding, HoldingKind, PatrimonioService, Portfolio, holdingKinds } from
         <mat-card appearance="outlined" class="stack">
           <h2>Importa uno storico</h2>
           <p class="muted">
-            Un file JSON di rilevazioni passate (vedi README). Gestori e posizioni mancanti vengono creati; le date già
-            presenti si saltano, quindi lo stesso file si può importare di nuovo senza doppioni.
+            Un file JSON di rilevazioni passate (vedi README). Gestori, posizioni e conti mancanti vengono creati; i conti
+            nuovi partono dal saldo dell'ultima rilevazione. Le date già presenti si saltano, quindi lo stesso file si può
+            importare di nuovo senza doppioni.
           </p>
           <input #picker type="file" accept="application/json,.json" hidden (change)="import($event)" />
           <div class="actions">
@@ -237,8 +238,10 @@ export class Holdings {
         this.importResult.set('Il file non è un JSON valido.');
         return;
       }
-      const { imported, skipped } = await this.service.import(content);
-      this.importResult.set(`Importate ${imported} rilevazioni, ${skipped} già presenti saltate.`);
+      const { imported, skipped, createdAccounts } = await this.service.import(content);
+      this.importResult.set(
+        `Importate ${imported} rilevazioni, ${skipped} già presenti saltate; creati ${createdAccounts} conti in Conti.`,
+      );
     });
   }
 

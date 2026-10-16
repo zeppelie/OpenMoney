@@ -115,6 +115,34 @@ public sealed class PatrimonioTests
     }
 
     [Fact]
+    public void Dei_conti_tenuti_solo_nelle_rilevazioni_vale_il_saldo_dell_ultima_in_cui_compaiono()
+    {
+        var bpm = Guid.NewGuid();
+        var september = Snapshot(new DateOnly(2026, 9, 15), new SnapshotAccount(null, "Satispay", 1_803.95m), new SnapshotAccount(null, "BBVA", 50m));
+        var october = Snapshot(new DateOnly(2026, 10, 15), new SnapshotAccount(null, "satispay ", 1_886.01m), new SnapshotAccount(bpm, "Bpm", 12_821.67m));
+
+        var balances = Core.Patrimonio.Snapshot.LatestUnlinkedBalances([october, september]);
+
+        Assert.Equal(2, balances.Count);
+        Assert.Equal(1_886.01m, balances["Satispay"]);
+        Assert.Equal(50m, balances["BBVA"]);
+    }
+
+    [Fact]
+    public void Collegando_un_conto_si_aggiornano_solo_le_righe_con_quel_nome_non_ancora_collegate()
+    {
+        var satispay = Guid.NewGuid();
+        var other = Guid.NewGuid();
+        var snapshot = Snapshot(new DateOnly(2026, 10, 15),
+            new SnapshotAccount(null, " SATISPAY", 1_886.01m), new SnapshotAccount(other, "Satispay", 5m), new SnapshotAccount(null, "Intesa", 252.35m));
+
+        snapshot.LinkAccount("Satispay", satispay);
+
+        Assert.Equal([satispay, other, null], snapshot.Accounts.Select(a => a.AccountId));
+        Assert.Equal(1_886.01m, snapshot.Accounts[0].Balance);
+    }
+
+    [Fact]
     public void Solo_gli_investimenti_hanno_un_gestore()
     {
         Assert.Equal(["MissingPortfolio"], new HoldingValues("ETF", HoldingKind.Investment, null, false).Normalized().Validate(false));
