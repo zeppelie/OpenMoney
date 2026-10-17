@@ -33,6 +33,11 @@ services:
       # L'app si fida delle intestazioni X-Forwarded-* del proxy: sa di essere servita in HTTPS e marca
       # "Secure" il cookie di login. È sicuro solo perché l'app non è raggiungibile se non tramite il proxy.
       ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1.0"
     volumes:
       - keys:/keys
       - attachments:/attachments

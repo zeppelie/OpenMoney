@@ -31,6 +31,11 @@ services:
       # Ricorrenze e addebiti delle carte maturano alla mezzanotte italiana, non a quella UTC.
       TZ: ${TZ:-Europe/Rome}
       ApiDocs: ${API_DOCS:-false}
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1.0"
     volumes:
       - keys:/keys
       - attachments:/attachments
